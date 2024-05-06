@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Spotify</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div id="preloader">
+        <img src="{{ url_for('static', filename='spotify.gif') }}" alt="Loading...">
+    </div>
+    <div class="main-content" style="display:none;">
+        <div class="navbar">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo" class="logo">
+            <div class="nav-links">
+                <a href="#" class="nav-link">Home</a>
+                <a href="#" class="nav-link">Contact Us</a>
+                <a href="#" class="nav-link">Login</a>
+            </div>
+            <button class="sidebar-toggle">☰</button>
+        </div>
+        <div class="header">
+            <img src="{{ url_for('static', filename='playlist.jpeg') }}" alt="Playlist Cover" class="playlist-cover">
+            <div>
+                <h3>Public Playlist</h3>
+                <h1>Playlist</h1>
+            </div>
+        </div>
+        <div class="track-list">
+            <h2 class="song-title">Songs</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Title</th>
+                        <th>Album</th>
+                        <th>Date Added</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for track in tracks %}
+                    <tr onclick="location.href='{{ url_for('song', track_id=track['track_id']) }}'" style="cursor: pointer;">
+                        <td>{{ loop.index }}</td>
+                        <td>{{ track['track_title'] }}</td>
+                        <td>{{ track['album_title'] }}</td>
+                        <td>{{ track['track_date_created'] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>            
+        </div>
+        <div class="playbar">
+            <div class="controls">
+                <button id="prev" class="icon-button"><i class="fas fa-step-backward"></i></button>
+                <button id="play-pause" class="icon-button"><i class="fas fa-play"></i></button>
+                <button id="next" class="icon-button"><i class="fas fa-step-forward"></i></button>
+            </div>
+            <div class="progress-container">
+                <span id="current-time">0:00</span>
+                <input type="range" id="song-progress" value="0">
+                <span id="total-duration">0:00</span>
+            </div>
+            <div class="volume-container">
+                <i class="fas fa-volume-up volume-icon"></i>
+                <input type="range" id="volume-control" min="0" max="100">
+            </div>
+        </div>
+    </div> 
+    <script>
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                document.getElementById('preloader').style.display = 'none';
+                document.querySelector('.main-content').style.display = 'block';
+            }, 3500); 
+        });
+    </script>    
+</body>
+</html>

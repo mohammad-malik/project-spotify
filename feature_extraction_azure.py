@@ -1,64 +1,77 @@
+from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient
 import librosa
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from pymongo import MongoClient
 import numpy as np
-import os
 import concurrent.futures
 from tqdm import tqdm
 from joblib import Memory, Parallel, delayed
 import logging
+import io
 
 # Setup logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
-# Directory with datasets
-audio_dir_prefix = r"/datasets/"
-selected = "fma_small"
-upper_limit = 153
+# Read file containing vm details.
+with open("vm_details.txt", "r") as f:
+    DATABASE_URI = f.readline().strip()
+    DATABASE_NAME = f.readline().strip()
+    COLLECTION_NAME = f.readline().strip()
 
-# Database variables.
-DB_URI = "mongodb://localhost:27017/"
-DB_NAME = "music_database"
+DATABASE_URI = "mongodb://localhost:27017/"
+DATABASE_NAME = "music_database"
 COLLECTION_NAME = "audio_features_small"
 
-# Generate folder names from 000 to as many as in dataset
-folder_names = [f"{i:03d}" for i in range(upper_limit)]
+# Database setup
+client = MongoClient(DATABASE_URI)
+db = client[DATABASE_NAME]
+collection = db[COLLECTION_NAME]
+
+# Read file containing azure details.
+with open("azure_details.txt", "r") as f:
+    connect_str = f.readline().strip()
+    container_name = f.readline().strip()
+
+connect_str = "your_connection_string_here"
+container_name = "your_container_name_here"
+blob_service_client = BlobServiceClient.from_connection_string(connect_str)
+container_client = blob_service_client.get_container_client(container_name)
+
+# Azure Blob Storage setup.
 audio_files = []
-for folder in folder_names:
-    folder_path = os.path.join(audio_dir_prefix, selected, folder)
-    if os.path.exists(folder_path):
-        audio_files.extend(
-            [
-                os.path.join(folder_path, file)
-                for file in os.listdir(folder_path)
-                if file.endswith(".mp3")
-            ]
-        )
+prefix = "fma_large/"
+blob_list = container_client.list_blobs(name_starts_with=prefix)
+
+for blob in blob_list:
+    # Check if the blob's name ends with ".mp3" to filter out audio files
+    if blob.name.endswith(".mp3"):
+        audio_files.append(blob.name)
+
 
 # Create a memory object for caching
 memory = Memory("cache_directory", verbose=0)
 
 
 @memory.cache
-def process_file(file):
+def process_file(blob_name):
     try:
-        y, sr = librosa.load(file, sr=None)
+        blob_client = container_client.get_blob_client(blob_name)
+        blob_data = blob_client.download_blob().readall()
+        y, sr = librosa.load(io.BytesIO(blob_data), sr=None)
         mfcc = librosa.feature.mfcc(y=y, sr=sr)
         return mfcc
     except Exception as e:
-        logging.error(f"Error loading file {file}: {e}")
+        logging.error(f"Error loading file {blob_name}: {e}")
         return np.array([])
 
 
 # Use joblib to process the files in parallel
 mfcc_features_list = Parallel(n_jobs=-1)(
     delayed(process_file)(file) for file in tqdm(
-        audio_files,
-        total=len(audio_files)
-    )
+        audio_files, total=len(audio_files))
 )
 
 # Concatenate all the MFCC features into a single 2D array
@@ -79,11 +92,6 @@ optimal_components = np.where(cumulative_variance >= 0.95)[0][0] + 1
 
 # Logging optimal components
 logging.info(f"Optimal number of PCA components: {optimal_components}")
-
-# Database setup
-client = MongoClient(DB_URI)
-db = client[DB_NAME]
-collection = db[COLLECTION_NAME]
 
 
 # Processing each file in ThreadPoolExecutor
