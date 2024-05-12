@@ -2,37 +2,46 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{{ track.track_title }} by {{ track.artist_name }}</title>
+    <title>{{ track['track_title'] }} by {{ track['artist_name'] }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='player_styles.css') }}">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js"></script>
 </head>
 <body>
     <div class="header">
         <div class="logo">
-            <a href="http://192.168.0.106:5002">
+            <a href="{{ url_for('index') }}">
                 <img src="{{ url_for('static', filename='logo.png') }}" alt="Spotify Logo" class="spotify-logo">
             </a>
         </div>
         <div class="music-player-container">
             <div class="music-details">
-                <img src="{{ url_for('static', filename='album.jpg') }}" alt="Album Cover" class="album-cover">
+                <img src="{{ url_for('static', filename='album_cover.png') }}" alt="Album Cover" class="album-cover">
                 <div class="song-info">
-                    <span class="song-title"><a href="{{ url_for('song', track_id=track.track_id) }}">{{ track.track_title }}</a></span>
-                    <span class="artist-name">{{ track.artist_name }}</span>
+                    <span class="song-title"><a href="{{ url_for('song', track_id=track['track_id']) }}">{{ track['track_title'] }}</a></span>
+                    <span class="artist-name">{{ track['artist_name'] }}</span>
                 </div>
             </div>
+            {% if audio_file %}
+            <audio id="audio-element" controls>
+                <source src="data:audio/mpeg;base64,{{ audio_file }}" type="audio/mpeg">
+                Your browser does not support the audio element.
+            </audio>
+            {% else %}
+            <p>Audio file is not available.</p>
+            {% endif %}
+                       
             <div class="music-controls">
                 <div class="time-progress-container">
                     <span id="current-time">0:00</span>
                     <input type="range" id="progress-bar" value="0">
                     <span id="total-duration">0:00</span>
                 </div>
-            </div>
                 <div class="playback-controls">
                     <button id="prev" onclick="previousSong()"><i class="fas fa-step-backward"></i></button>
                     <button onclick="togglePlayPause()"><i class="fas fa-play" id="play-pause-icon"></i></button>
                     <button id="next" onclick="nextSong()"><i class="fas fa-step-forward"></i></button>
                 </div>
+            </div>
             <div class="recommendations">
                 <h3>Recommended</h3>
                 <ul>
@@ -43,48 +52,5 @@
             </div>
         </div>
     </div>
-    <script src="{{ url_for('static', filename='player_script.js') }}"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const trackUrls = {
-                {% for rec in recommendations %}
-                "{{ rec['track_id'] }}": "{{ url_for('song', track_id=rec['track_id']) }}",
-                {% endfor %}
-            };
-
-            const recommendations = {{ recommendations|tojson }};
-            let currentSongIndex = parseInt(localStorage.getItem('currentSongIndex')) || 0;
-
-            document.getElementById('next').addEventListener('click', function() {
-                currentSongIndex = (currentSongIndex + 1) % recommendations.length;
-                localStorage.setItem('currentSongIndex', currentSongIndex);
-                window.location.href = trackUrls[recommendations[currentSongIndex]['track_id']];
-            });
-
-            document.getElementById('prev').addEventListener('click', function() {
-                currentSongIndex = (currentSongIndex - 1 + recommendations.length) % recommendations.length;
-                localStorage.setItem('currentSongIndex', currentSongIndex);
-                window.location.href = trackUrls[recommendations[currentSongIndex]['track_id']];
-            });
-        });
-    </script>
-    <script>
-        let isPlaying = false; 
-
-        function togglePlayPause() {
-            const audioElement = document.getElementById('audio-element'); 
-            const playPauseIcon = document.getElementById('play-pause-icon');
-    
-            if (isPlaying) {
-                audioElement.pause();
-                playPauseIcon.className = 'fas fa-play'; 
-            } else {
-                audioElement.play();
-                playPauseIcon.className = 'fas fa-pause'; 
-            }
-    
-            isPlaying = !isPlaying;
-        }
-    </script>
 </body>
 </html>

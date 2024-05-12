@@ -1,0 +1,262 @@
+24/05/07 11:57:55 WARN Utils: Your hostname, pop-os resolves to a loopback address: 127.0.1.1; using 192.168.0.148 instead (on interface eno1)
+24/05/07 11:57:55 WARN Utils: Set SPARK_LOCAL_IP if you need to bind to another address
+:: loading settings :: url = jar:file:/opt/spark/jars/ivy-2.5.1.jar!/org/apache/ivy/core/settings/ivysettings.xml
+Ivy Default Cache set to: /home/mohammad/.ivy2/cache
+The jars for the packages stored in: /home/mohammad/.ivy2/jars
+org.mongodb.spark#mongo-spark-connector_2.12 added as a dependency
+:: resolving dependencies :: org.apache.spark#spark-submit-parent-c59855ce-6655-4b04-8e9b-899a67b204ee;1.0
+	confs: [default]
+	found org.mongodb.spark#mongo-spark-connector_2.12;3.0.1 in central
+	found org.mongodb#mongodb-driver-sync;4.0.5 in central
+	found org.mongodb#bson;4.0.5 in central
+	found org.mongodb#mongodb-driver-core;4.0.5 in central
+:: resolution report :: resolve 161ms :: artifacts dl 7ms
+	:: modules in use:
+	org.mongodb#bson;4.0.5 from central in [default]
+	org.mongodb#mongodb-driver-core;4.0.5 from central in [default]
+	org.mongodb#mongodb-driver-sync;4.0.5 from central in [default]
+	org.mongodb.spark#mongo-spark-connector_2.12;3.0.1 from central in [default]
+	---------------------------------------------------------------------
+	|                  |            modules            ||   artifacts   |
+	|       conf       | number| search|dwnlded|evicted|| number|dwnlded|
+	---------------------------------------------------------------------
+	|      default     |   4   |   0   |   0   |   0   ||   4   |   0   |
+	---------------------------------------------------------------------
+:: retrieving :: org.apache.spark#spark-submit-parent-c59855ce-6655-4b04-8e9b-899a67b204ee
+	confs: [default]
+	0 artifacts copied, 4 already retrieved (0kB/5ms)
+24/05/07 11:57:55 WARN NativeCodeLoader: Unable to load native-hadoop library for your platform... using builtin-java classes where applicable
+24/05/07 11:57:56 INFO SparkContext: Running Spark version 3.5.1
+24/05/07 11:57:56 INFO SparkContext: OS info Linux, 6.8.0-76060800daily20240311-generic, amd64
+24/05/07 11:57:56 INFO SparkContext: Java version 11.0.22
+24/05/07 11:57:56 INFO ResourceUtils: ==============================================================
+24/05/07 11:57:56 INFO ResourceUtils: No custom resources configured for spark.driver.
+24/05/07 11:57:56 INFO ResourceUtils: ==============================================================
+24/05/07 11:57:56 INFO SparkContext: Submitted application: Music Recommendation Model
+24/05/07 11:57:56 INFO ResourceProfile: Default ResourceProfile created, executor resources: Map(memoryOverhead -> name: memoryOverhead, amount: 4096, script: , vendor: , cores -> name: cores, amount: 1, script: , vendor: , memory -> name: memory, amount: 16384, script: , vendor: , offHeap -> name: offHeap, amount: 0, script: , vendor: ), task resources: Map(cpus -> name: cpus, amount: 1.0)
+24/05/07 11:57:56 INFO ResourceProfile: Limiting resource is cpu
+24/05/07 11:57:56 INFO ResourceProfileManager: Added ResourceProfile id: 0
+24/05/07 11:57:56 INFO SecurityManager: Changing view acls to: mohammad
+24/05/07 11:57:56 INFO SecurityManager: Changing modify acls to: mohammad
+24/05/07 11:57:56 INFO SecurityManager: Changing view acls groups to: 
+24/05/07 11:57:56 INFO SecurityManager: Changing modify acls groups to: 
+24/05/07 11:57:56 INFO SecurityManager: SecurityManager: authentication disabled; ui acls disabled; users with view permissions: mohammad; groups with view permissions: EMPTY; users with modify permissions: mohammad; groups with modify permissions: EMPTY
+24/05/07 11:57:56 INFO Utils: Successfully started service 'sparkDriver' on port 40893.
+24/05/07 11:57:57 INFO SparkEnv: Registering MapOutputTracker
+24/05/07 11:57:57 INFO SparkEnv: Registering BlockManagerMaster
+24/05/07 11:57:57 INFO BlockManagerMasterEndpoint: Using org.apache.spark.storage.DefaultTopologyMapper for getting topology information
+24/05/07 11:57:57 INFO BlockManagerMasterEndpoint: BlockManagerMasterEndpoint up
+24/05/07 11:57:57 INFO SparkEnv: Registering BlockManagerMasterHeartbeat
+24/05/07 11:57:57 INFO DiskBlockManager: Created local directory at /tmp/blockmgr-a11c3f6b-61a2-4f8e-bc66-896f14f20eea
+24/05/07 11:57:57 INFO MemoryStore: MemoryStore started with capacity 434.4 MiB
+24/05/07 11:57:57 INFO SparkEnv: Registering OutputCommitCoordinator
+24/05/07 11:57:57 INFO JettyUtils: Start Jetty 0.0.0.0:4040 for SparkUI
+24/05/07 11:57:57 INFO Utils: Successfully started service 'SparkUI' on port 4040.
+24/05/07 11:57:57 INFO SparkContext: Added JAR file:///home/mohammad/.ivy2/jars/org.mongodb.spark_mongo-spark-connector_2.12-3.0.1.jar at spark://192.168.0.148:40893/jars/org.mongodb.spark_mongo-spark-connector_2.12-3.0.1.jar with timestamp 1715065076681
+24/05/07 11:57:57 INFO SparkContext: Added JAR file:///home/mohammad/.ivy2/jars/org.mongodb_mongodb-driver-sync-4.0.5.jar at spark://192.168.0.148:40893/jars/org.mongodb_mongodb-driver-sync-4.0.5.jar with timestamp 1715065076681
+24/05/07 11:57:57 INFO SparkContext: Added JAR file:///home/mohammad/.ivy2/jars/org.mongodb_bson-4.0.5.jar at spark://192.168.0.148:40893/jars/org.mongodb_bson-4.0.5.jar with timestamp 1715065076681
+24/05/07 11:57:57 INFO SparkContext: Added JAR file:///home/mohammad/.ivy2/jars/org.mongodb_mongodb-driver-core-4.0.5.jar at spark://192.168.0.148:40893/jars/org.mongodb_mongodb-driver-core-4.0.5.jar with timestamp 1715065076681
+24/05/07 11:57:57 INFO SparkContext: Added file file:///home/mohammad/.ivy2/jars/org.mongodb.spark_mongo-spark-connector_2.12-3.0.1.jar at file:///home/mohammad/.ivy2/jars/org.mongodb.spark_mongo-spark-connector_2.12-3.0.1.jar with timestamp 1715065076681
+24/05/07 11:57:57 INFO Utils: Copying /home/mohammad/.ivy2/jars/org.mongodb.spark_mongo-spark-connector_2.12-3.0.1.jar to /tmp/spark-baec0202-6131-4174-8be1-9e99e8c9c69d/userFiles-5dc59263-54c1-4e82-9833-106446a15091/org.mongodb.spark_mongo-spark-connector_2.12-3.0.1.jar
+24/05/07 11:57:57 INFO SparkContext: Added file file:///home/mohammad/.ivy2/jars/org.mongodb_mongodb-driver-sync-4.0.5.jar at file:///home/mohammad/.ivy2/jars/org.mongodb_mongodb-driver-sync-4.0.5.jar with timestamp 1715065076681
+24/05/07 11:57:57 INFO Utils: Copying /home/mohammad/.ivy2/jars/org.mongodb_mongodb-driver-sync-4.0.5.jar to /tmp/spark-baec0202-6131-4174-8be1-9e99e8c9c69d/userFiles-5dc59263-54c1-4e82-9833-106446a15091/org.mongodb_mongodb-driver-sync-4.0.5.jar
+24/05/07 11:57:57 INFO SparkContext: Added file file:///home/mohammad/.ivy2/jars/org.mongodb_bson-4.0.5.jar at file:///home/mohammad/.ivy2/jars/org.mongodb_bson-4.0.5.jar with timestamp 1715065076681
+24/05/07 11:57:57 INFO Utils: Copying /home/mohammad/.ivy2/jars/org.mongodb_bson-4.0.5.jar to /tmp/spark-baec0202-6131-4174-8be1-9e99e8c9c69d/userFiles-5dc59263-54c1-4e82-9833-106446a15091/org.mongodb_bson-4.0.5.jar
+24/05/07 11:57:57 INFO SparkContext: Added file file:///home/mohammad/.ivy2/jars/org.mongodb_mongodb-driver-core-4.0.5.jar at file:///home/mohammad/.ivy2/jars/org.mongodb_mongodb-driver-core-4.0.5.jar with timestamp 1715065076681
+24/05/07 11:57:57 INFO Utils: Copying /home/mohammad/.ivy2/jars/org.mongodb_mongodb-driver-core-4.0.5.jar to /tmp/spark-baec0202-6131-4174-8be1-9e99e8c9c69d/userFiles-5dc59263-54c1-4e82-9833-106446a15091/org.mongodb_mongodb-driver-core-4.0.5.jar
+24/05/07 11:57:57 INFO Executor: Starting executor ID driver on host 192.168.0.148
+24/05/07 11:57:57 INFO Executor: OS info Linux, 6.8.0-76060800daily20240311-generic, amd64
+24/05/07 11:57:57 INFO Executor: Java version 11.0.22
+24/05/07 11:57:57 INFO Executor: Starting executor with user classpath (userClassPathFirst = false): ''
+24/05/07 11:57:57 INFO Executor: Created or updated repl class loader org.apache.spark.util.MutableURLClassLoader@3e1f8509 for default.
+24/05/07 11:57:57 INFO Executor: Fetching file:///home/mohammad/.ivy2/jars/org.mongodb_mongodb-driver-sync-4.0.5.jar with timestamp 1715065076681
+24/05/07 11:57:57 INFO Utils: /home/mohammad/.ivy2/jars/org.mongodb_mongodb-driver-sync-4.0.5.jar has been previously copied to /tmp/spark-baec0202-6131-4174-8be1-9e99e8c9c69d/userFiles-5dc59263-54c1-4e82-9833-106446a15091/org.mongodb_mongodb-driver-sync-4.0.5.jar
+24/05/07 11:57:57 INFO Executor: Fetching file:///home/mohammad/.ivy2/jars/org.mongodb.spark_mongo-spark-connector_2.12-3.0.1.jar with timestamp 1715065076681
+24/05/07 11:57:57 INFO Utils: /home/mohammad/.ivy2/jars/org.mongodb.spark_mongo-spark-connector_2.12-3.0.1.jar has been previously copied to /tmp/spark-baec0202-6131-4174-8be1-9e99e8c9c69d/userFiles-5dc59263-54c1-4e82-9833-106446a15091/org.mongodb.spark_mongo-spark-connector_2.12-3.0.1.jar
+24/05/07 11:57:57 INFO Executor: Fetching file:///home/mohammad/.ivy2/jars/org.mongodb_mongodb-driver-core-4.0.5.jar with timestamp 1715065076681
+24/05/07 11:57:57 INFO Utils: /home/mohammad/.ivy2/jars/org.mongodb_mongodb-driver-core-4.0.5.jar has been previously copied to /tmp/spark-baec0202-6131-4174-8be1-9e99e8c9c69d/userFiles-5dc59263-54c1-4e82-9833-106446a15091/org.mongodb_mongodb-driver-core-4.0.5.jar
+24/05/07 11:57:57 INFO Executor: Fetching file:///home/mohammad/.ivy2/jars/org.mongodb_bson-4.0.5.jar with timestamp 1715065076681
+24/05/07 11:57:57 INFO Utils: /home/mohammad/.ivy2/jars/org.mongodb_bson-4.0.5.jar has been previously copied to /tmp/spark-baec0202-6131-4174-8be1-9e99e8c9c69d/userFiles-5dc59263-54c1-4e82-9833-106446a15091/org.mongodb_bson-4.0.5.jar
+24/05/07 11:57:57 INFO Executor: Fetching spark://192.168.0.148:40893/jars/org.mongodb_bson-4.0.5.jar with timestamp 1715065076681
+24/05/07 11:57:57 INFO TransportClientFactory: Successfully created connection to /192.168.0.148:40893 after 21 ms (0 ms spent in bootstraps)
+24/05/07 11:57:57 INFO Utils: Fetching spark://192.168.0.148:40893/jars/org.mongodb_bson-4.0.5.jar to /tmp/spark-baec0202-6131-4174-8be1-9e99e8c9c69d/userFiles-5dc59263-54c1-4e82-9833-106446a15091/fetchFileTemp14823571007369698183.tmp
+24/05/07 11:57:57 INFO Utils: /tmp/spark-baec0202-6131-4174-8be1-9e99e8c9c69d/userFiles-5dc59263-54c1-4e82-9833-106446a15091/fetchFileTemp14823571007369698183.tmp has been previously copied to /tmp/spark-baec0202-6131-4174-8be1-9e99e8c9c69d/userFiles-5dc59263-54c1-4e82-9833-106446a15091/org.mongodb_bson-4.0.5.jar
+24/05/07 11:57:57 INFO Executor: Adding file:/tmp/spark-baec0202-6131-4174-8be1-9e99e8c9c69d/userFiles-5dc59263-54c1-4e82-9833-106446a15091/org.mongodb_bson-4.0.5.jar to class loader default
+24/05/07 11:57:57 INFO Executor: Fetching spark://192.168.0.148:40893/jars/org.mongodb_mongodb-driver-sync-4.0.5.jar with timestamp 1715065076681
+24/05/07 11:57:57 INFO Utils: Fetching spark://192.168.0.148:40893/jars/org.mongodb_mongodb-driver-sync-4.0.5.jar to /tmp/spark-baec0202-6131-4174-8be1-9e99e8c9c69d/userFiles-5dc59263-54c1-4e82-9833-106446a15091/fetchFileTemp10445070502983627767.tmp
+24/05/07 11:57:57 INFO Utils: /tmp/spark-baec0202-6131-4174-8be1-9e99e8c9c69d/userFiles-5dc59263-54c1-4e82-9833-106446a15091/fetchFileTemp10445070502983627767.tmp has been previously copied to /tmp/spark-baec0202-6131-4174-8be1-9e99e8c9c69d/userFiles-5dc59263-54c1-4e82-9833-106446a15091/org.mongodb_mongodb-driver-sync-4.0.5.jar
+24/05/07 11:57:57 INFO Executor: Adding file:/tmp/spark-baec0202-6131-4174-8be1-9e99e8c9c69d/userFiles-5dc59263-54c1-4e82-9833-106446a15091/org.mongodb_mongodb-driver-sync-4.0.5.jar to class loader default
+24/05/07 11:57:57 INFO Executor: Fetching spark://192.168.0.148:40893/jars/org.mongodb.spark_mongo-spark-connector_2.12-3.0.1.jar with timestamp 1715065076681
+24/05/07 11:57:57 INFO Utils: Fetching spark://192.168.0.148:40893/jars/org.mongodb.spark_mongo-spark-connector_2.12-3.0.1.jar to /tmp/spark-baec0202-6131-4174-8be1-9e99e8c9c69d/userFiles-5dc59263-54c1-4e82-9833-106446a15091/fetchFileTemp9895138058743962336.tmp
+24/05/07 11:57:57 INFO Utils: /tmp/spark-baec0202-6131-4174-8be1-9e99e8c9c69d/userFiles-5dc59263-54c1-4e82-9833-106446a15091/fetchFileTemp9895138058743962336.tmp has been previously copied to /tmp/spark-baec0202-6131-4174-8be1-9e99e8c9c69d/userFiles-5dc59263-54c1-4e82-9833-106446a15091/org.mongodb.spark_mongo-spark-connector_2.12-3.0.1.jar
+24/05/07 11:57:57 INFO Executor: Adding file:/tmp/spark-baec0202-6131-4174-8be1-9e99e8c9c69d/userFiles-5dc59263-54c1-4e82-9833-106446a15091/org.mongodb.spark_mongo-spark-connector_2.12-3.0.1.jar to class loader default
+24/05/07 11:57:57 INFO Executor: Fetching spark://192.168.0.148:40893/jars/org.mongodb_mongodb-driver-core-4.0.5.jar with timestamp 1715065076681
+24/05/07 11:57:57 INFO Utils: Fetching spark://192.168.0.148:40893/jars/org.mongodb_mongodb-driver-core-4.0.5.jar to /tmp/spark-baec0202-6131-4174-8be1-9e99e8c9c69d/userFiles-5dc59263-54c1-4e82-9833-106446a15091/fetchFileTemp4862954746584844603.tmp
+24/05/07 11:57:57 INFO Utils: /tmp/spark-baec0202-6131-4174-8be1-9e99e8c9c69d/userFiles-5dc59263-54c1-4e82-9833-106446a15091/fetchFileTemp4862954746584844603.tmp has been previously copied to /tmp/spark-baec0202-6131-4174-8be1-9e99e8c9c69d/userFiles-5dc59263-54c1-4e82-9833-106446a15091/org.mongodb_mongodb-driver-core-4.0.5.jar
+24/05/07 11:57:57 INFO Executor: Adding file:/tmp/spark-baec0202-6131-4174-8be1-9e99e8c9c69d/userFiles-5dc59263-54c1-4e82-9833-106446a15091/org.mongodb_mongodb-driver-core-4.0.5.jar to class loader default
+24/05/07 11:57:57 INFO Utils: Successfully started service 'org.apache.spark.network.netty.NettyBlockTransferService' on port 45857.
+24/05/07 11:57:57 INFO NettyBlockTransferService: Server created on 192.168.0.148:45857
+24/05/07 11:57:57 INFO BlockManager: Using org.apache.spark.storage.RandomBlockReplicationPolicy for block replication policy
+24/05/07 11:57:57 INFO BlockManagerMaster: Registering BlockManager BlockManagerId(driver, 192.168.0.148, 45857, None)
+24/05/07 11:57:57 INFO BlockManagerMasterEndpoint: Registering block manager 192.168.0.148:45857 with 434.4 MiB RAM, BlockManagerId(driver, 192.168.0.148, 45857, None)
+24/05/07 11:57:57 INFO BlockManagerMaster: Registered BlockManager BlockManagerId(driver, 192.168.0.148, 45857, None)
+24/05/07 11:57:57 INFO BlockManager: Initialized BlockManager: BlockManagerId(driver, 192.168.0.148, 45857, None)
+24/05/07 11:57:57 INFO SharedState: Setting hive.metastore.warehouse.dir ('null') to the value of spark.sql.warehouse.dir.
+24/05/07 11:57:57 INFO SharedState: Warehouse path is 'file:/home/mohammad/Documents/GitHub/project-spotify/spark-warehouse'.
+24/05/07 11:57:58 INFO MemoryStore: Block broadcast_0 stored as values in memory (estimated size 216.0 B, free 434.4 MiB)
+24/05/07 11:57:58 INFO MemoryStore: Block broadcast_0_piece0 stored as bytes in memory (estimated size 429.0 B, free 434.4 MiB)
+24/05/07 11:57:58 INFO BlockManagerInfo: Added broadcast_0_piece0 in memory on 192.168.0.148:45857 (size: 429.0 B, free: 434.4 MiB)
+24/05/07 11:57:58 INFO SparkContext: Created broadcast 0 from broadcast at MongoSpark.scala:530
+24/05/07 11:57:58 INFO cluster: Cluster created with settings {hosts=[localhost:27017], mode=SINGLE, requiredClusterType=UNKNOWN, serverSelectionTimeout='30000 ms'}
+24/05/07 11:57:58 INFO MongoClientCache: Creating MongoClient: [localhost:27017]
+24/05/07 11:57:58 INFO cluster: Cluster description not yet available. Waiting for 30000 ms before timing out
+24/05/07 11:57:58 INFO connection: Opened connection [connectionId{localValue:1, serverValue:188}] to localhost:27017
+24/05/07 11:57:58 INFO cluster: Monitor thread successfully connected to server with description ServerDescription{address=localhost:27017, type=STANDALONE, state=CONNECTED, ok=true, minWireVersion=0, maxWireVersion=21, maxDocumentSize=16777216, logicalSessionTimeoutMinutes=30, roundTripTimeNanos=2679906}
+24/05/07 11:57:58 INFO connection: Opened connection [connectionId{localValue:2, serverValue:189}] to localhost:27017
+24/05/07 11:57:59 INFO SparkContext: Starting job: treeAggregate at MongoInferSchema.scala:88
+24/05/07 11:57:59 INFO DAGScheduler: Got job 0 (treeAggregate at MongoInferSchema.scala:88) with 1 output partitions
+24/05/07 11:57:59 INFO DAGScheduler: Final stage: ResultStage 0 (treeAggregate at MongoInferSchema.scala:88)
+24/05/07 11:57:59 INFO DAGScheduler: Parents of final stage: List()
+24/05/07 11:57:59 INFO DAGScheduler: Missing parents: List()
+24/05/07 11:57:59 INFO DAGScheduler: Submitting ResultStage 0 (MapPartitionsRDD[4] at treeAggregate at MongoInferSchema.scala:88), which has no missing parents
+24/05/07 11:57:59 INFO MemoryStore: Block broadcast_1 stored as values in memory (estimated size 8.1 KiB, free 434.4 MiB)
+24/05/07 11:57:59 INFO MemoryStore: Block broadcast_1_piece0 stored as bytes in memory (estimated size 4.1 KiB, free 434.4 MiB)
+24/05/07 11:57:59 INFO BlockManagerInfo: Added broadcast_1_piece0 in memory on 192.168.0.148:45857 (size: 4.1 KiB, free: 434.4 MiB)
+24/05/07 11:57:59 INFO SparkContext: Created broadcast 1 from broadcast at DAGScheduler.scala:1585
+24/05/07 11:57:59 INFO DAGScheduler: Submitting 1 missing tasks from ResultStage 0 (MapPartitionsRDD[4] at treeAggregate at MongoInferSchema.scala:88) (first 15 tasks are for partitions Vector(0))
+24/05/07 11:57:59 INFO TaskSchedulerImpl: Adding task set 0.0 with 1 tasks resource profile 0
+24/05/07 11:57:59 INFO TaskSetManager: Starting task 0.0 in stage 0.0 (TID 0) (192.168.0.148, executor driver, partition 0, ANY, 8685 bytes) 
+24/05/07 11:57:59 INFO Executor: Running task 0.0 in stage 0.0 (TID 0)
+24/05/07 11:58:00 INFO Executor: Finished task 0.0 in stage 0.0 (TID 0). 1999 bytes result sent to driver
+24/05/07 11:58:00 INFO TaskSetManager: Finished task 0.0 in stage 0.0 (TID 0) in 1145 ms on 192.168.0.148 (executor driver) (1/1)
+24/05/07 11:58:00 INFO TaskSchedulerImpl: Removed TaskSet 0.0, whose tasks have all completed, from pool 
+24/05/07 11:58:00 INFO DAGScheduler: ResultStage 0 (treeAggregate at MongoInferSchema.scala:88) finished in 1.239 s
+24/05/07 11:58:00 INFO DAGScheduler: Job 0 is finished. Cancelling potential speculative or zombie tasks for this job
+24/05/07 11:58:00 INFO TaskSchedulerImpl: Killing all running tasks in stage 0: Stage finished
+24/05/07 11:58:00 INFO DAGScheduler: Job 0 finished: treeAggregate at MongoInferSchema.scala:88, took 1.272958 s
+24/05/07 11:58:01 INFO BlockManagerInfo: Removed broadcast_1_piece0 on 192.168.0.148:45857 in memory (size: 4.1 KiB, free: 434.4 MiB)
+24/05/07 11:58:01 INFO MongoRelation: requiredColumns: mfcc, spectral_centroid, zero_crossing_rate, filters: 
+24/05/07 11:58:01 INFO CodeGenerator: Code generated in 174.597746 ms
+24/05/07 11:58:01 INFO CodeGenerator: Code generated in 21.850277 ms
+24/05/07 11:58:01 INFO DAGScheduler: Registering RDD 13 (first at VectorAssembler.scala:205) as input to shuffle 0
+24/05/07 11:58:01 INFO DAGScheduler: Got map stage job 1 (first at VectorAssembler.scala:205) with 10 output partitions
+24/05/07 11:58:01 INFO DAGScheduler: Final stage: ShuffleMapStage 1 (first at VectorAssembler.scala:205)
+24/05/07 11:58:01 INFO DAGScheduler: Parents of final stage: List()
+24/05/07 11:58:01 INFO DAGScheduler: Missing parents: List()
+24/05/07 11:58:01 INFO DAGScheduler: Submitting ShuffleMapStage 1 (MapPartitionsRDD[13] at first at VectorAssembler.scala:205), which has no missing parents
+24/05/07 11:58:01 INFO MemoryStore: Block broadcast_2 stored as values in memory (estimated size 56.6 KiB, free 434.3 MiB)
+24/05/07 11:58:01 INFO MemoryStore: Block broadcast_2_piece0 stored as bytes in memory (estimated size 22.0 KiB, free 434.3 MiB)
+24/05/07 11:58:01 INFO BlockManagerInfo: Added broadcast_2_piece0 in memory on 192.168.0.148:45857 (size: 22.0 KiB, free: 434.4 MiB)
+24/05/07 11:58:01 INFO SparkContext: Created broadcast 2 from broadcast at DAGScheduler.scala:1585
+24/05/07 11:58:01 INFO DAGScheduler: Submitting 10 missing tasks from ShuffleMapStage 1 (MapPartitionsRDD[13] at first at VectorAssembler.scala:205) (first 15 tasks are for partitions Vector(0, 1, 2, 3, 4, 5, 6, 7, 8, 9))
+24/05/07 11:58:01 INFO TaskSchedulerImpl: Adding task set 1.0 with 10 tasks resource profile 0
+24/05/07 11:58:01 INFO TaskSetManager: Starting task 0.0 in stage 1.0 (TID 1) (192.168.0.148, executor driver, partition 0, ANY, 8701 bytes) 
+24/05/07 11:58:01 INFO TaskSetManager: Starting task 1.0 in stage 1.0 (TID 2) (192.168.0.148, executor driver, partition 1, ANY, 8719 bytes) 
+24/05/07 11:58:01 INFO TaskSetManager: Starting task 2.0 in stage 1.0 (TID 3) (192.168.0.148, executor driver, partition 2, ANY, 8719 bytes) 
+24/05/07 11:58:01 INFO TaskSetManager: Starting task 3.0 in stage 1.0 (TID 4) (192.168.0.148, executor driver, partition 3, ANY, 8719 bytes) 
+24/05/07 11:58:01 INFO TaskSetManager: Starting task 4.0 in stage 1.0 (TID 5) (192.168.0.148, executor driver, partition 4, ANY, 8719 bytes) 
+24/05/07 11:58:01 INFO TaskSetManager: Starting task 5.0 in stage 1.0 (TID 6) (192.168.0.148, executor driver, partition 5, ANY, 8719 bytes) 
+24/05/07 11:58:01 INFO TaskSetManager: Starting task 6.0 in stage 1.0 (TID 7) (192.168.0.148, executor driver, partition 6, ANY, 8719 bytes) 
+24/05/07 11:58:01 INFO TaskSetManager: Starting task 7.0 in stage 1.0 (TID 8) (192.168.0.148, executor driver, partition 7, ANY, 8719 bytes) 
+24/05/07 11:58:01 INFO TaskSetManager: Starting task 8.0 in stage 1.0 (TID 9) (192.168.0.148, executor driver, partition 8, ANY, 8719 bytes) 
+24/05/07 11:58:01 INFO TaskSetManager: Starting task 9.0 in stage 1.0 (TID 10) (192.168.0.148, executor driver, partition 9, ANY, 8702 bytes) 
+24/05/07 11:58:01 INFO Executor: Running task 0.0 in stage 1.0 (TID 1)
+24/05/07 11:58:01 INFO Executor: Running task 1.0 in stage 1.0 (TID 2)
+24/05/07 11:58:01 INFO Executor: Running task 2.0 in stage 1.0 (TID 3)
+24/05/07 11:58:01 INFO Executor: Running task 3.0 in stage 1.0 (TID 4)
+24/05/07 11:58:01 INFO Executor: Running task 4.0 in stage 1.0 (TID 5)
+24/05/07 11:58:01 INFO Executor: Running task 5.0 in stage 1.0 (TID 6)
+24/05/07 11:58:01 INFO Executor: Running task 7.0 in stage 1.0 (TID 8)
+24/05/07 11:58:01 INFO Executor: Running task 8.0 in stage 1.0 (TID 9)
+24/05/07 11:58:01 INFO Executor: Running task 9.0 in stage 1.0 (TID 10)
+24/05/07 11:58:01 INFO Executor: Running task 6.0 in stage 1.0 (TID 7)
+24/05/07 11:58:01 INFO connection: Opened connection [connectionId{localValue:7, serverValue:190}] to localhost:27017
+24/05/07 11:58:01 INFO connection: Opened connection [connectionId{localValue:4, serverValue:195}] to localhost:27017
+24/05/07 11:58:01 INFO connection: Opened connection [connectionId{localValue:9, serverValue:197}] to localhost:27017
+24/05/07 11:58:01 INFO connection: Opened connection [connectionId{localValue:6, serverValue:193}] to localhost:27017
+24/05/07 11:58:01 INFO connection: Opened connection [connectionId{localValue:10, serverValue:196}] to localhost:27017
+24/05/07 11:58:01 INFO connection: Opened connection [connectionId{localValue:3, serverValue:192}] to localhost:27017
+24/05/07 11:58:01 INFO connection: Opened connection [connectionId{localValue:11, serverValue:198}] to localhost:27017
+24/05/07 11:58:01 INFO connection: Opened connection [connectionId{localValue:5, serverValue:191}] to localhost:27017
+24/05/07 11:58:01 INFO connection: Opened connection [connectionId{localValue:8, serverValue:194}] to localhost:27017
+24/05/07 11:58:02 INFO CodeGenerator: Code generated in 98.43881 ms
+24/05/07 11:58:02 INFO CodeGenerator: Code generated in 20.691546 ms
+24/05/07 11:58:03 INFO CodeGenerator: Code generated in 160.145624 ms
+24/05/07 11:58:03 INFO CodeGenerator: Code generated in 67.79633 ms
+24/05/07 11:58:04 INFO CodeGenerator: Code generated in 75.105845 ms
+24/05/07 11:58:10 WARN TaskMemoryManager: Failed to allocate a page (2097136 bytes), try again.
+24/05/07 11:58:11 WARN TaskMemoryManager: Failed to allocate a page (2097136 bytes), try again.
+24/05/07 11:58:12 WARN TaskMemoryManager: Failed to allocate a page (2097136 bytes), try again.
+24/05/07 11:58:12 WARN TaskMemoryManager: Failed to allocate a page (2097136 bytes), try again.
+24/05/07 11:58:15 ERROR Utils: Uncaught exception in thread stdout writer for python3
+java.lang.OutOfMemoryError: Java heap space
+Exception in thread "stdout writer for python3" 24/05/07 11:58:15 ERROR Utils: uncaught error in thread Spark Context Cleaner, stopping SparkContext
+java.lang.OutOfMemoryError: Java heap space
+java.lang.OutOfMemoryError: Java heap space
+24/05/07 11:58:15 INFO SparkContext: SparkContext is stopping with exitCode 0.
+24/05/07 11:58:15 ERROR Utils: throw uncaught fatal error in thread Spark Context Cleaner
+java.lang.OutOfMemoryError: Java heap space
+Exception in thread "Spark Context Cleaner" java.lang.OutOfMemoryError: Java heap space
+24/05/07 11:58:20 ERROR Utils: Uncaught exception in thread stdout writer for python3
+java.lang.OutOfMemoryError: Java heap space
+24/05/07 11:58:20 ERROR Utils: Uncaught exception in thread stdout writer for python3
+java.lang.OutOfMemoryError: Java heap space
+Exception in thread "stdout writer for python3" java.lang.OutOfMemoryError: Java heap space
+Exception in thread "stdout writer for python3" java.lang.OutOfMemoryError: Java heap space
+ERROR:root:Exception while sending command.
+Traceback (most recent call last):
+  File "/opt/spark/python/lib/py4j-0.10.9.7-src.zip/py4j/clientserver.py", line 511, in send_command
+    answer = smart_decode(self.stream.readline()[:-1])
+RuntimeError: reentrant call inside <_io.BufferedReader name=3>
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/spark/python/lib/py4j-0.10.9.7-src.zip/py4j/java_gateway.py", line 1038, in send_command
+    response = connection.send_command(command)
+  File "/opt/spark/python/lib/py4j-0.10.9.7-src.zip/py4j/clientserver.py", line 539, in send_command
+    raise Py4JNetworkError(
+py4j.protocol.Py4JNetworkError: Error while sending or receiving
+ERROR:root:Exception while sending command.
+Traceback (most recent call last):
+  File "/opt/spark/python/lib/py4j-0.10.9.7-src.zip/py4j/clientserver.py", line 511, in send_command
+    answer = smart_decode(self.stream.readline()[:-1])
+  File "/usr/lib/python3.10/socket.py", line 705, in readinto
+    return self._sock.recv_into(b)
+  File "/opt/spark/python/lib/pyspark.zip/pyspark/context.py", line 381, in signal_handler
+    self.cancelAllJobs()
+  File "/opt/spark/python/lib/pyspark.zip/pyspark/context.py", line 2446, in cancelAllJobs
+    self._jsc.sc().cancelAllJobs()
+  File "/opt/spark/python/lib/py4j-0.10.9.7-src.zip/py4j/java_gateway.py", line 1322, in __call__
+    return_value = get_return_value(
+  File "/opt/spark/python/lib/pyspark.zip/pyspark/errors/exceptions/captured.py", line 179, in deco
+    return f(*a, **kw)
+  File "/opt/spark/python/lib/py4j-0.10.9.7-src.zip/py4j/protocol.py", line 334, in get_return_value
+    raise Py4JError(
+py4j.protocol.Py4JError: An error occurred while calling o41.sc
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/spark/python/lib/py4j-0.10.9.7-src.zip/py4j/java_gateway.py", line 1038, in send_command
+    response = connection.send_command(command)
+  File "/opt/spark/python/lib/py4j-0.10.9.7-src.zip/py4j/clientserver.py", line 539, in send_command
+    raise Py4JNetworkError(
+py4j.protocol.Py4JNetworkError: Error while sending or receiving
+Traceback (most recent call last):
+  File "/home/mohammad/Documents/GitHub/project-spotify/query.py", line 84, in <module>
+    df = assembler.transform(df).na.drop(subset=["features"])
+  File "/opt/spark/python/lib/pyspark.zip/pyspark/ml/base.py", line 262, in transform
+  File "/opt/spark/python/lib/pyspark.zip/pyspark/ml/wrapper.py", line 398, in _transform
+  File "/opt/spark/python/lib/py4j-0.10.9.7-src.zip/py4j/java_gateway.py", line 1322, in __call__
+  File "/opt/spark/python/lib/pyspark.zip/pyspark/errors/exceptions/captured.py", line 179, in deco
+  File "/opt/spark/python/lib/py4j-0.10.9.7-src.zip/py4j/protocol.py", line 334, in get_return_value
+py4j.protocol.Py4JError: An error occurred while calling o120.transform
+24/05/07 11:58:20 INFO DiskBlockManager: Shutdown hook called
+24/05/07 11:58:21 INFO ShutdownHookManager: Shutdown hook called
+24/05/07 11:58:21 INFO ShutdownHookManager: Deleting directory /tmp/spark-baec0202-6131-4174-8be1-9e99e8c9c69d/pyspark-607f0374-859d-4aa0-b5b8-d0c673ecf606
+24/05/07 11:58:21 INFO ShutdownHookManager: Deleting directory /tmp/spark-baec0202-6131-4174-8be1-9e99e8c9c69d
+24/05/07 11:58:21 INFO ShutdownHookManager: Deleting directory /tmp/spark-e83360e7-8d4c-4fd6-ac01-b44401123f34
+24/05/07 11:58:21 INFO ShutdownHookManager: Deleting directory /tmp/spark-baec0202-6131-4174-8be1-9e99e8c9c69d/userFiles-5dc59263-54c1-4e82-9833-106446a15091
+24/05/07 11:58:21 INFO SparkUI: Stopped Spark web UI at http://192.168.0.148:4040
+24/05/07 11:58:21 INFO DAGScheduler: ShuffleMapStage 1 (first at VectorAssembler.scala:205) failed in 19.862 s due to Stage cancelled because SparkContext was shut down
