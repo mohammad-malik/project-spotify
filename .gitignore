@@ -162,3 +162,8 @@ cython_debug/
 datasets
 cleaned_tracks.csv
 raw_tracks.csv
+/minhash_lsh_model
+files_in_dataset.txt
+query.txt
+query_output.txt
+static/.DS_Store

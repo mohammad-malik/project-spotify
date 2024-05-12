@@ -1,20 +1,12 @@
-from pyspark.sql import SparkSession
-from pyspark.ml.feature import MinHashLSH, VectorAssembler
+from pyspark.sql import SparkSession, functions as F, Window
+from pyspark.ml.feature import MinHashLSH, VectorAssembler, PCA, StandardScaler
 from pyspark.ml.linalg import Vectors, VectorUDT
-from pyspark.sql.functions import udf, col, hash, expr, broadcast
-from pyspark.sql.types import ArrayType, DoubleType, StructType, StructField
+from pyspark.sql.types import ArrayType, DoubleType
 import os
 
 # Initialize Spark Session
 spark = (
     SparkSession.builder.appName("Music Recommendation Model")
-    .config("spark.executor.memory", "16g")
-    .config("spark.driver.memory", "4g")
-    .config("spark.executor.heartbeatInterval", "120s")
-    .config("spark.network.timeout", "800s")
-    .config("spark.default.parallelism", "200")
-    .config("spark.sql.shuffle.partitions", "200")
-    .config("spark.storage.level", "MEMORY_AND_DISK_SER")
     .config(
         "spark.mongodb.input.uri",
         "mongodb://localhost:27017/music_database.audio_features_small",
@@ -26,58 +18,55 @@ spark = (
     .getOrCreate()
 )
 
-
 # Define UDFs
-def flatten_and_mean(features):
-    if features and isinstance(features[0], list):
-        flattened = [item for sublist in features for item in sublist]
-        return float(sum(flattened) / len(flattened))
-    elif features:
-        return float(sum(features) / len(features))
-    return 0.0
-
-
-get_mean_udf = udf(flatten_and_mean, DoubleType())
-flatten_mfcc_udf = udf(
-    lambda mfccs: [float(sum(col) / len(col)) for col in mfccs if mfccs],
+flatten_mfcc_udf = F.udf(
+    lambda mfccs: [float(sum(col) / len(col)) for col in mfccs] if mfccs else [],
     ArrayType(DoubleType()),
 )
-array_to_vector_udf = udf(lambda x: Vectors.dense(x), VectorUDT())
+array_to_vector_udf = F.udf(lambda x: Vectors.dense(x), VectorUDT())
 
-# Read and prepare data
+# Read and repartition data
 df = spark.read.format("mongo").load()
-df = df.repartition(200)  # Increase the number of partitions
 
-# Determine the number of batches
-num_batches = 15
+# Filter out rows with missing features early
+df = df.filter(
+    F.col("mfcc").isNotNull()
+    & F.col("spectral_centroid").isNotNull()
+    & F.col("zero_crossing_rate").isNotNull()
+)
 
-# Define the schema for the transformed data
-transformed_data_schema = StructType([
-    StructField("hashes", ArrayType(VectorUDT()), True),
-    StructField("features", VectorUDT(), True)
-])
+# Add a row number to the DataFrame
+window_spec = Window.orderBy("_id")
+df = df.withColumn("row_num", F.row_number().over(window_spec))
 
-# Initialize an empty DataFrame to store transformed data
-transformed_data = spark.createDataFrame([], transformed_data_schema)
+# Checkpoint directory setup
+spark.sparkContext.setCheckpointDir("file:///tmp/spark-checkpoint")
 
-# Process each batch
-for i in range(num_batches):
-    batch_df = df.filter((hash("file_name") % num_batches) == i)
 
+# Function to process data in batches
+def process_batch(batch_df, batch_name):
     # Apply transformations
     batch_df = (
-        batch_df.withColumn(
-            "mfcc_flat", flatten_mfcc_udf("mfcc"))
+        batch_df.withColumn("mfcc_flat", flatten_mfcc_udf("mfcc"))
+        .withColumn("mfcc_vector", array_to_vector_udf("mfcc_flat"))
         .withColumn(
-            "mfcc_vector", array_to_vector_udf("mfcc_flat"))
+            "spectral_centroid_mean",
+            F.expr(
+                "aggregate(spectral_centroid, 0D, (acc, x) -> acc + x[0]) \
+                    / size(spectral_centroid)"
+            ),
+        )
         .withColumn(
-            "spectral_centroid_mean", get_mean_udf("spectral_centroid"))
-        .withColumn(
-            "zero_crossing_rate_mean", get_mean_udf("zero_crossing_rate"))
+            "zero_crossing_rate_mean",
+            F.expr(
+                "aggregate(zero_crossing_rate, 0D, (acc, x) -> acc + x[0]) \
+                    / size(zero_crossing_rate)"
+            ),
+        )
         .filter(
-            col("mfcc_vector").isNotNull()
-            & col("spectral_centroid_mean").isNotNull()
-            & col("zero_crossing_rate_mean").isNotNull()
+            F.col("mfcc_vector").isNotNull()
+            & F.col("spectral_centroid_mean").isNotNull()
+            & F.col("zero_crossing_rate_mean").isNotNull()
         )
     )
 
@@ -86,52 +75,62 @@ for i in range(num_batches):
         inputCols=[
             "mfcc_vector",
             "spectral_centroid_mean",
-            "zero_crossing_rate_mean"
+            "zero_crossing_rate_mean",
         ],
         outputCol="features",
     )
-    features_batch_df = assembler.transform(batch_df) \
-        .na.drop(subset=["features"])
+    features_data = assembler.transform(batch_df).na.drop(subset=["features"])
 
     # Apply MinHash LSH
-    mh = MinHashLSH(inputCol="features", outputCol="hashes", numHashTables=5)
-    model = mh.fit(features_batch_df)
-    transformed_batch_df = model.transform(features_batch_df)
+    mh = MinHashLSH(
+        inputCol="features",
+        outputCol="hashes",
+        numHashTables=5
+    )
+    model = mh.fit(features_data)
+    transformed_data = model.transform(features_data)
 
-    # Store transformed data
-    transformed_data = transformed_data.union(
-        transformed_batch_df.select("hashes", "features"))
+    # Compute Jaccard Similarity using approxSimilarityJoin
+    jaccard_df = model.approxSimilarityJoin(
+        transformed_data,
+        transformed_data,
+        0.1,
+        distCol="JaccardDistance",
+    )
 
-    # Show results for the batch
-    transformed_batch_df.show()
+    jaccard_similarity = jaccard_df.select(
+        F.expr("1 - JaccardDistance as JaccardSimilarity")
+    )
 
-# Drop the 'hashes' column from the DataFrame
-transformed_data = transformed_data.drop("hashes")
+    # Use approxQuantile instead of collect to avoid large data collection
+    avg_similarity_score = jaccard_similarity.approxQuantile(
+        "JaccardSimilarity", [0.5], 0.01
+    )[0]
+    print(
+        f"Average Jaccard Similarity Score for {batch_name} "
+        + f"batch: {avg_similarity_score}"
+    )
 
-# Transform the entire DataFrame with the last model
-transformed_data = model.transform(transformed_data)
+    return model
 
-# Compute Jaccard Similarity on the final model
-jaccard_df = model.approxSimilarityJoin(
-    broadcast(transformed_data),  # Broadcast smaller DataFrame
-    transformed_data,
-    0.5,
-    distCol="JaccardDistance"
-)
 
-jaccard_similarity = jaccard_df.select(
-    expr("1 - JaccardDistance as JaccardSimilarity")
-)
+# Process data in batches
+batch_size = 100  # Adjust batch size accordingly
 
-# Compute average Jaccard Similarity Score across all batches
-avg_similarity_score = jaccard_similarity.agg(
-    {"JaccardSimilarity": "avg"}).collect()[0][0]
-print(f"Average Jaccard Similarity Score: {avg_similarity_score}")
+total_rows = df.count()
+num_batches = (total_rows // batch_size) + 1
 
-# Save the model
-model_dir = "file:///home/mohammad/Desktop/test/"
-model_path = os.path.join(model_dir, "minhash_lsh_model")
-model.write().overwrite().save(model_path)
+for batch_num in range(num_batches):
+    start = batch_num * batch_size
+    end = start + batch_size
+    batch_df = df.filter((F.col("row_num") > start) & (F.col("row_num") <= end))
+    model = process_batch(batch_df, f"batch_{batch_num + 1}")
+    # # Save the model only for the final batch
+    # if batch_num == num_batches - 1:
+    model_dir = "file:///home/mohammad/Desktop/manal/"
+    model_path = os.path.join(model_dir, r"minhash_lsh_model")
+    model.write().overwrite().save(model_path)
+    break
 
 # Stop Spark session
 spark.stop()

@@ -1,12 +1,19 @@
 import pandas as pd
 
 
-def preprocess_data(file_path):
+def preprocess_data(file_path, files_in_dataset_path):
+    # Load the list of track_ids from the "files_in_dataset" file
+    with open(files_in_dataset_path, "r") as f:
+        files_in_dataset = set(
+            int(line.strip().removesuffix('.mp3')) for line in f
+        )
+
     df = pd.read_csv(
         file_path,
         usecols=[
             "track_id",
             "track_title",
+            "track_url",
             "artist_name",
             "album_title",
             "track_duration",
@@ -15,11 +22,11 @@ def preprocess_data(file_path):
         ],
     )
 
-    df["track_date_created"] = pd.to_datetime(
-        df["track_date_created"])
+    # Only keep records where the track_id is in the "files_in_dataset" list
+    df = df[df["track_id"].isin(files_in_dataset)]
 
-    df["track_date_created"] = df["track_date_created"] \
-        .dt.strftime("%Y-%m-%d %H:%M:%S")
+    df["track_date_created"] = pd.to_datetime(df["track_date_created"])
+    df["track_date_created"] = df["track_date_created"].dt.strftime("%Y-%m-%d %H:%M:%S")
 
     df["track_duration"] = df["track_duration"].apply(
         lambda x: (
@@ -40,4 +47,5 @@ def preprocess_data(file_path):
     return df
 
 
-tracks_df = preprocess_data("tracks.csv")
+tracks_df = preprocess_data("raw_tracks.csv", "files_in_dataset.txt")
+print(f"Tracks found: {len(tracks_df)}")

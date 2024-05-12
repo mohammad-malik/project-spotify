@@ -2,45 +2,36 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{{ track['track_title'] }} by {{ track['artist_name'] }}</title>
+    <title>{{ track.track_title }} by {{ track.artist_name }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='player_styles.css') }}">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js"></script>
 </head>
 <body>
     <div class="header">
         <div class="logo">
-            <a href="{{ url_for('index') }}">
+            <a href="http://192.168.0.106:5003">
                 <img src="{{ url_for('static', filename='logo.png') }}" alt="Spotify Logo" class="spotify-logo">
-            </a>
+            </a>      
         </div>
         <div class="music-player-container">
             <div class="music-details">
-                <img src="{{ url_for('static', filename='album_cover.png') }}" alt="Album Cover" class="album-cover">
+                <img src="{{ url_for('static', filename='album.jpg')}}" alt="Album Cover" class="album-cover">
                 <div class="song-info">
                     <span class="song-title"><a href="{{ url_for('song', track_id=track['track_id']) }}">{{ track['track_title'] }}</a></span>
                     <span class="artist-name">{{ track['artist_name'] }}</span>
                 </div>
             </div>
-            {% if audio_file %}
-            <audio id="audio-element" controls>
-                <source src="data:audio/mpeg;base64,{{ audio_file }}" type="audio/mpeg">
-                Your browser does not support the audio element.
-            </audio>
-            {% else %}
-            <p>Audio file is not available.</p>
-            {% endif %}
-                       
             <div class="music-controls">
                 <div class="time-progress-container">
                     <span id="current-time">0:00</span>
                     <input type="range" id="progress-bar" value="0">
                     <span id="total-duration">0:00</span>
                 </div>
-                <div class="playback-controls">
-                    <button id="prev" onclick="previousSong()"><i class="fas fa-step-backward"></i></button>
-                    <button onclick="togglePlayPause()"><i class="fas fa-play" id="play-pause-icon"></i></button>
-                    <button id="next" onclick="nextSong()"><i class="fas fa-step-forward"></i></button>
-                </div>
+            </div>
+            <div class="playback-controls">
+                <button id="prev" onclick="previousSong()"><i class="fas fa-step-backward"></i></button>
+                <button onclick="togglePlayPause()"><i class="fas fa-play" id="play-pause-icon"></i></button>
+                <button id="next" onclick="nextSong()"><i class="fas fa-step-forward"></i></button>
             </div>
             <div class="recommendations">
                 <h3>Recommended</h3>
@@ -52,5 +43,89 @@
             </div>
         </div>
     </div>
+
+    <audio id="audio-element" src="{{ url_for('serve_audio', track_id=track['track_id']) }}"></audio>
+
+    <script src="{{ url_for('static', filename='player_script.js') }}"></script>
+    <script>
+        {% comment %} document.addEventListener('DOMContentLoaded', function() {
+            const trackUrls = {
+                {% for rec in recommendations %}
+                "{{ rec['track_id'] }}": "{{ url_for('serve_audio', track_id=rec['track_id']) }}",
+                {% endfor %}
+            }; {% endcomment %}
+
+            document.addEventListener('DOMContentLoaded', function() {
+                const audioElement = document.getElementById('audio-element');
+                const progressBar = document.getElementById('progress-bar');
+                const currentTimeElement = document.getElementById('current-time');
+                const totalDurationElement = document.getElementById('total-duration');
+                const playPauseIcon = document.getElementById('play-pause-icon');
+                let isPlaying = false;
+        
+                // Handling Next and Previous track navigation
+                let currentSongIndex = 0;
+                const tracks = {{ recommendations|tojson }};
+                const trackUrls = tracks.map(track => "{{ url_for('serve_audio', track_id='') }}" + track.track_id);
+        
+                function playSong(index) {
+                    currentSongIndex = index;
+                    audioElement.src = trackUrls[currentSongIndex];
+                    audioElement.play();
+                    playPauseIcon.className = 'fas fa-pause';
+                    isPlaying = true;
+                    updateTrackDetails();
+                }
+        
+                function updateTrackDetails() {
+                    const track = tracks[currentSongIndex];
+                    document.querySelector('.song-title a').textContent = track.track_title;
+                    document.querySelector('.artist-name').textContent = track.artist_name;
+                    // Assuming album cover is updated similarly, if images are included in track data
+                }
+        
+                document.getElementById('next').addEventListener('click', function() {
+                    let newIndex = (currentSongIndex + 1) % tracks.length;
+                    playSong(newIndex);
+                });
+        
+                document.getElementById('prev').addEventListener('click', function() {
+                    let newIndex = (currentSongIndex - 1 + tracks.length) % tracks.length;
+                    playSong(newIndex);
+                });
+        
+                function togglePlayPause() {
+                    if (isPlaying) {
+                        audioElement.pause();
+                        playPauseIcon.className = 'fas fa-play';
+                        isPlaying = false;
+                    } else {
+                        audioElement.play();
+                        playPauseIcon.className = 'fas fa-pause';
+                        isPlaying = true;
+                    }
+                }
+        
+                // Event listeners for the audio element
+                audioElement.addEventListener('timeupdate', function() {
+                    const currentTime = audioElement.currentTime;
+                    const duration = audioElement.duration;
+                    progressBar.value = (currentTime / duration) * 100;
+                    currentTimeElement.innerText = formatTime(currentTime);
+                    totalDurationElement.innerText = formatTime(duration);
+                });
+        
+                progressBar.addEventListener('input', function() {
+                    const newTime = (progressBar.value / 100) * audioElement.duration;
+                    audioElement.currentTime = newTime;
+                });
+        
+                function formatTime(seconds) {
+                    const minutes = Math.floor(seconds / 60);
+                    const remainingSeconds = Math.floor(seconds % 60);
+                    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
+                }
+            });
+    </script>   
 </body>
 </html>

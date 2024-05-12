@@ -1,19 +1,20 @@
 import librosa
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
-from pymongo import MongoClient
-import numpy as np
-import os
-import concurrent.futures
-from tqdm import tqdm
-from joblib import Memory, Parallel, delayed
+from pymongo import MongoClient, InsertOne
 import logging
+from confluent_kafka import Consumer, KafkaError, TopicPartition
+import concurrent.futures
+from pydub import AudioSegment
+import io
+import numpy as np
 
-# Setup logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
+# Kafka Consumer Configuration
+KAFKA_BOOTSTRAP_SERVERS = "localhost:9092"
+KAFKA_TOPIC = "streamed_music_local"
+KAFKA_GROUP_ID = "audio_feature_extraction_group"
 
+# MongoDB Configuration
 DATABASE_URI = "mongodb://localhost:27017/"
 DATABASE_NAME = "music_database"
 COLLECTION_NAME = "audio_features_small"
@@ -23,89 +24,56 @@ client = MongoClient(DATABASE_URI)
 db = client[DATABASE_NAME]
 collection = db[COLLECTION_NAME]
 
-# Directory with datasets
-audio_dir_prefix = r"/media/mohammad/Small boi/Project_Datasets"
+# PCA Components
+FIXED_COMPONENTS = 18
 
-# Select dataset comes from collection name after removing "audio_features_".
-selected = "fma_" + COLLECTION_NAME.split("_")[-1]
+# Setup logging
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
-file_read_limits = {
-    "fma_tiny": 3,
-    "fma_small": 156,
-    "fma_medium": 156,
-    "fma_large": 156,
+# Kafka Consumer setup
+consumer_conf = {
+    "bootstrap.servers": KAFKA_BOOTSTRAP_SERVERS,
+    "group.id": KAFKA_GROUP_ID,
+    "auto.offset.reset": "earliest",
 }
+consumer = Consumer(consumer_conf)
+tp = TopicPartition(KAFKA_TOPIC, 0, 0)
+consumer.assign([tp])
 
-# Generate folder names from 000 to as many as in dataset
-folder_names = [f"{i:03d}" for i in range(file_read_limits[selected])]
-audio_files = []
-for folder in folder_names:
-    folder_path = os.path.join(audio_dir_prefix, selected, folder)
-    if os.path.exists(folder_path):
-        audio_files.extend(
-            [
-                os.path.join(folder_path, file)
-                for file in os.listdir(folder_path)
-                if file.endswith(".mp3")
-            ]
-        )
-
-# Create a memory object for caching
-memory = Memory("cache_directory", verbose=0)
+# Initialize scikit-learn transformers and PCA model
+scaler_mfcc = StandardScaler()
+scaler_feature = MinMaxScaler()
+pca = PCA(n_components=FIXED_COMPONENTS)
 
 
-@memory.cache
-def process_file(file):
+def process_audio_features(track_id, audio_data):
     try:
-        y, sr = librosa.load(file, sr=None)
-        mfcc = librosa.feature.mfcc(y=y, sr=sr)
-        return mfcc
-    except Exception as e:
-        logging.error(f"Error loading file {file}: {e}")
-        return np.array([])
+        # Create a BytesIO object from the audio data
+        audio_file = io.BytesIO(audio_data)
 
+        # Load audio data with pydub
+        audio = AudioSegment.from_file(audio_file)
 
-# Use joblib to process the files in parallel
-mfcc_features_list = Parallel(n_jobs=-1)(
-    delayed(process_file)(file) for file in tqdm(
-        audio_files, total=len(audio_files))
-)
+        # Convert to mono and get raw data
+        audio_mono = audio.set_channels(1)
+        raw_data = np.array(audio_mono.get_array_of_samples())
 
-# Concatenate all the MFCC features into a single 2D array
-mfcc_features = np.concatenate(
-    [f.T for f in mfcc_features_list if f.size > 0],
-    axis=0
-)
+        # Normalize raw data to between -1 and 1
+        normalized_data = raw_data / np.iinfo(raw_data.dtype).max
 
-# Standardize the features
-scaler = StandardScaler()
-mfcc_scaled = scaler.fit_transform(mfcc_features)
+        # Process with librosa
+        y = librosa.to_mono(normalized_data)
+        sr = audio.frame_rate
 
-# Fit PCA on the standardized features without reducing dimensionality.
-pca = PCA()
-pca.fit(mfcc_scaled)
-cumulative_variance = np.cumsum(pca.explained_variance_ratio_)
-optimal_components = np.where(cumulative_variance >= 0.95)[0][0] + 1
-
-# Logging optimal components
-logging.info(f"Optimal number of PCA components: {optimal_components}")
-
-
-# Processing each file in ThreadPoolExecutor
-def insert_features(file, n_components):
-    try:
-        y, sr = librosa.load(file, sr=None)
         mfcc = librosa.feature.mfcc(y=y, sr=sr)
         spectral_centroid = librosa.feature.spectral_centroid(y=y, sr=sr)
         zero_crossing_rate = librosa.feature.zero_crossing_rate(y)
 
-        scaler_mfcc = StandardScaler()
         mfcc_scaled = scaler_mfcc.fit_transform(mfcc.T).T
-
-        pca = PCA(n_components=n_components)
         mfcc_reduced = pca.fit_transform(mfcc_scaled)
 
-        scaler_feature = MinMaxScaler()
         spectral_centroid_normalized = scaler_feature.fit_transform(
             spectral_centroid.T
         ).T
@@ -114,20 +82,66 @@ def insert_features(file, n_components):
         ).T
 
         document = {
-            "file_name": file,
+            "track_id": track_id,
             "mfcc": mfcc_reduced.tolist(),
             "spectral_centroid": spectral_centroid_normalized.tolist(),
             "zero_crossing_rate": zero_crossing_rate_normalized.tolist(),
         }
-        collection.insert_one(document)
-        logging.info(f"Processed and inserted: {file}")
+        return document
+
     except Exception as e:
-        logging.error(f"Error processing file {file}: {e}")
+        logging.error(f"Error processing audio data for track {track_id}: {e}")
+        return None
 
 
-with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
-    for file in audio_files:
-        executor.submit(insert_features, file, optimal_components)
+def batch_insert_documents(documents):
+    try:
+        if documents:
+            collection.bulk_write(
+                [InsertOne(doc) for doc in documents], ordered=False)
+            logging.info(f"Inserted batch of {len(documents)} documents.")
+    except Exception as e:
+        logging.error(f"Error inserting batch documents: {e}")
 
-client.close()
-logging.info("MongoDB connection closed.")
+
+def consume_audio_messages():
+    batch_size = 10
+    batch = []
+
+    try:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+            while True:
+                msg = consumer.poll(1.0)
+                if msg is None:
+                    continue
+                if msg.error():
+                    if msg.error().code() == KafkaError._PARTITION_EOF:
+                        continue
+                    else:
+                        logging.error(f"ERROR: {msg.error()}")
+                        break
+
+                track_id = msg.key().decode("utf-8")
+                audio_data = msg.value()
+
+                future = executor.submit(
+                    process_audio_features, track_id, audio_data)
+                batch.append(future)
+
+                if len(batch) >= batch_size:
+                    results = [
+                        f.result() for f in batch if f.result() is not None
+                    ]
+                    batch_insert_documents(results)
+                    batch.clear()
+
+    except KeyboardInterrupt:
+        pass
+    finally:
+        consumer.close()
+        client.close()
+        logging.info("Kafka consumer and MongoDB connection closed.")
+
+
+if __name__ == "__main__":
+    consume_audio_messages()

@@ -8,7 +8,7 @@ from tqdm import tqdm
 from joblib import Memory, Parallel, delayed
 
 # Directory with datasets.
-audio_dir_prefix = r"/mnt/d/Project_Datasets/"
+audio_dir_prefix = r""
 
 # Dataset to use.
 selected = "fma_small"
@@ -30,7 +30,7 @@ for folder in folder_names:
 audio_files = np.array(audio_files)
 
 # Select a random sample of audio files
-indices = np.random.choice(len(audio_files), size=100, replace=False)
+indices = np.random.choice(len(audio_files), size=500, replace=False)
 sample_files = audio_files[indices]
 
 # Create a memory object for caching
