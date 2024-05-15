@@ -4,15 +4,17 @@ from confluent_kafka import Consumer, KafkaException, TopicPartition
 from flask import Flask, render_template, jsonify, redirect, url_for, Response
 from io import BytesIO
 from query import recommend_tracks
+import json
 
-# from flask_ngrok import run_with_ngrok
+# Read data from a json file in current directory.
+with open('data.json', 'r') as file:
+    data = json.load(file)
 
 # Set up logging
 logging.basicConfig(level=logging.WARN)
 
 # Kafka details
-bootstrap_servers = "localhost:9092"
-topic = "streamed_music_local"
+topic = "streamed_music"
 group_id = "music_consumer_group"
 
 # Load tracks data into DataFrame
@@ -25,7 +27,7 @@ tracks_df["track_date_created"] = pd.to_datetime(
 # Create a Kafka consumer
 consumer = Consumer(
     {
-        "bootstrap.servers": bootstrap_servers,
+        "bootstrap.servers": data['bootstrap_servers'],
         "group.id": group_id,
         "auto.offset.reset": "earliest",
     }
@@ -37,9 +39,6 @@ audio_store = {}
 
 # Flask app setup
 app = Flask(__name__)
-
-# Run Flask app with ngrok when running locally
-# run_with_ngrok(app)
 
 
 @app.route("/")
@@ -70,14 +69,14 @@ def get_audio_data(track_id):
     print(f"Looking for track: {track_id}")
     consumer = Consumer(
         {
-            "bootstrap.servers": "localhost:9092",
+            "bootstrap.servers": data['bootstrap_servers'],
             "auto.offset.reset": "earliest",
             "group.id": "audio_consumer_group",
         }
     )
 
-    # Manually assign the consumer to the beginning of the topic
-    tp = TopicPartition("streamed_music_local", 0, 0)  # partition, offset
+    # Manually assign the consumer to the beginning of the topic.
+    tp = TopicPartition("streamed_music", 0, 0)  # partition, offset
     consumer.assign([tp])
 
     audio_data = None
@@ -88,15 +87,12 @@ def get_audio_data(track_id):
         while True:
             msg = consumer.poll(1)
 
-            if msg is None:  # no messages in the topic
+            if msg is None:  # no messages in the topic.
                 break
-
-            # with open("audio_data.txt", "a") as f:
-            #     f.write(str(msg.key()))
 
             if msg.error():
                 if msg.error().code() == KafkaException._PARTITION_EOF:
-                    break  # Break the inner loop if end of partition
+                    break  # Break the inner loop if end of partition.
                 else:
                     logging.error(f"Consumer error: {msg.error()}")
                     consumer.close()
@@ -109,7 +105,7 @@ def get_audio_data(track_id):
                 break
 
         if audio_data is not None:
-            break  # Break the outer loop if track is found
+            break  # Break the outer loop if track is found.
 
     return audio_data
 
@@ -155,24 +151,24 @@ def serve_audio(track_id):
 @app.route("/get_recommendations/<int:track_id>")
 def get_recommendations(track_id):
     try:
-        # Log the track ID being processed
+        # Log the track ID being processed.
         print(f"Fetching recommendations for track ID: {track_id}")
 
         # Generate recommendations
         recommended_ids = recommend_tracks(track_id)
 
-        # Log the recommended track IDs
+        # Log the recommended track IDs.
         print(f"Recommended track IDs: {recommended_ids}")
 
         # Changing track_id format back to that of the original dataset.
         recommended_ids = [int(track_id[:-4]) for track_id in recommended_ids]
 
-        # Fetch the recommended tracks details
+        # Fetch the recommended tracks details.
         recommended_tracks = tracks_df[
             tracks_df["track_id"].isin(recommended_ids)
         ].to_dict(orient="records")
 
-        # Log the recommended tracks
+        # Log the recommended tracks.
         print(f"Recommended tracks: {recommended_tracks}")
 
         return jsonify(recommended_tracks)

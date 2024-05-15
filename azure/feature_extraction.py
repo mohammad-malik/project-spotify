@@ -9,19 +9,23 @@ import multiprocessing as mp
 from pydub import AudioSegment
 import io
 from tqdm import tqdm
+import json
+
+# Read json file containing Azure data.
+with open('data.json', 'r') as file:
+    data = json.load(file)
 
 # Kafka Consumer Configuration
-KAFKA_BOOTSTRAP_SERVERS = "localhost:9092"
-KAFKA_TOPIC = "streamed_music_local"
+KAFKA_BOOTSTRAP_SERVERS = data["bootstrap_servers"]
+KAFKA_TOPIC = "streamed_music"
 KAFKA_GROUP_ID = "audio_feature_extraction_group"
 
 # MongoDB Configuration
-DATABASE_URI = "mongodb://localhost:27017/"
 DATABASE_NAME = "music_database"
 COLLECTION_NAME = "audio_features"
 
 # Database setup
-client = MongoClient(DATABASE_URI)
+client = MongoClient(data["mongo_uri"])
 db = client[DATABASE_NAME]
 collection = db[COLLECTION_NAME]
 
@@ -35,7 +39,7 @@ logging.basicConfig(
 
 # Kafka Consumer setup
 consumer_conf = {
-    "bootstrap.servers": KAFKA_BOOTSTRAP_SERVERS,
+    "bootstrap.servers": data["bootstrap_servers"],
     "group.id": KAFKA_GROUP_ID,
     "auto.offset.reset": "earliest",
 }
@@ -55,7 +59,7 @@ def process_audio_features(track_id, audio_data):
         audio_file = io.BytesIO(audio_data)
 
         # Load audio data with pydub
-        audio = AudioSegment.from_file(audio_file)
+        audio = AudioSegment.from_file(audio_file, format="mp3")
 
         # Convert to mono and get raw data
         audio_mono = audio.set_channels(1)

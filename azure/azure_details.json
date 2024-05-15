@@ -1,0 +1,8 @@
+{
+    "connection_string": "<your connection string>",
+    "account_key": "<your account key>",
+    "account_name": "<your account name>",
+    "container_name": "<your container name>",
+    "bootstrap_servers": "<ip1>, <ip2>, <ip3>, <continue as needed...>",
+    "mongo_uri": "<your mongo uri>"
+}

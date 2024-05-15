@@ -4,21 +4,22 @@ from pyspark.ml.linalg import Vectors, VectorUDT
 from pyspark.sql.types import ArrayType, DoubleType, BooleanType
 from pyspark import StorageLevel
 import os
+import json
+
+# Read data from a json file in current directory.
+with open('data.json', 'r') as file:
+    data = json.load(file)
 
 # Initialize Spark Session
 spark = (
     SparkSession.builder.appName("Music Recommendation Model")
     .config(
         "spark.mongodb.input.uri",
-        "mongodb://localhost:27017/music_database.audio_features_small",
+        f"{data['mongo_uri']}/music_database.audio_features",
     )
     .config(
         "spark.mongodb.output.uri",
-        "mongodb://localhost:27017/music_database.transformed_tracks",
-    )
-    .config(
-        "spark.master",
-        "local",
+        f"{data['mongo_uri']}/music_database.transformed_tracks",
     )
     .config(
         "spark.jars.packages",
@@ -39,7 +40,7 @@ array_to_vector_udf = F.udf(lambda x: Vectors.dense(x), VectorUDT())
 
 # Function to load and preprocess data.
 def load_and_preprocess_data():
-    # Read data
+    # Read data.
     df = spark.read.format("mongo").load()
 
     # Add a row number to the DataFrame.
@@ -136,10 +137,10 @@ def recommend_tracks(track_id):
     model_dir = os.path.abspath(cwd)
     model_path = "file://" + os.path.join(cwd, "minhash_lsh_model")
 
-    # Load and preprocess data
+    # Load and preprocess data.
     df = load_and_preprocess_data()
 
-    # Check if model directory exists, if not, create it
+    # Check if model directory exists, if not, create it.
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
 
@@ -154,10 +155,11 @@ def recommend_tracks(track_id):
         print("Loading existing MinHash LSH model.")
         model = MinHashLSHModel.load(model_path)
 
-    # Add MinHash LSH transformation to the DataFrame
+    # Add MinHash LSH transformation to the DataFrame.
     df = model.transform(df)
     df.persist(StorageLevel.DISK_ONLY)
 
     # Find and return the closest tracks
     recommended_tracks = find_closest_tracks(track_id, model, df)
+    print(f"Recommended tracks for track ID {track_id}: {recommended_tracks}")
     return recommended_tracks

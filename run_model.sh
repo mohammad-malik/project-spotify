@@ -1,1 +1,1 @@
-spark-submit --packages org.mongodb.spark:mongo-spark-connector_2.12:3.0.1 ./ml_recommendation.py
+python3 ./ml_recommendation.py > output_model.txt 2>&1

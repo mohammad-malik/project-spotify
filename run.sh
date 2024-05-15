@@ -1,14 +1,20 @@
-# running the producer script.
+#!/bin/bash
+
+echo "Starting Zookeeper and Kafka."
+screen -dmS zookeeper bash -c "zookeeper-server-start.sh $KAFKA_HOME/config/zookeeper.properties"
+screen -dmS kafka bash -c "kafka-server-start.sh $KAFKA_HOME/config/server.properties"
+
+echo "Running the producer."
 python3 ./producer.py
 
-# running the feature extraction script.
+echo "Running the feature extraction script."
 python3 ./feature_extraction.py
 
-# running preprocessing script.
+echo "Running preprocessing script."
 python3 ./preprocessing_tracks_metadata.py
 
-# running the train model script.
-# gnome-terminal -- bash -c "python3 ./train_model.py"
+# echo "Running the train model script."
+# python3 ./train_model.py
 
-# running main application.2
+echo "Running Flask App."
 python3 ./app.py

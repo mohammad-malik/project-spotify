@@ -3,17 +3,37 @@ from pyspark.ml.feature import MinHashLSH, VectorAssembler
 from pyspark.ml.linalg import Vectors, VectorUDT
 from pyspark.sql.types import ArrayType, DoubleType, BooleanType
 import os
+import json
+
+# Read data from a json file in current directory.
+with open('data.json', 'r') as file:
+    data = json.load(file)
 
 # Initialize Spark Session
 spark = (
     SparkSession.builder.appName("Music Recommendation Model")
+    .config("spark.executor.memory", "8g")
+    .config("spark.driver.memory", "4g")
+    .config("spark.executor.instances", "16")
+    .config("spark.executor.cores", "4")
+    .config("spark.driver.maxResultSize", "2g")
+    .config("spark.sql.shuffle.partitions", "200")
+    .config("spark.default.parallelism", "100")
+    .config("spark.memory.fraction", "0.6")
+    .config("spark.memory.storageFraction", "0.5")
+    .config("spark.scheduler.mode", "FAIR")
+    .config("fs.azure", "org.apache.hadoop.fs.azure.NativeAzureFileSystem")
+    .config(
+        f"fs.azure.account.key.{data['account_name']}.blob.core.windows.net",
+        f"{data['account_key']}",
+    )
     .config(
         "spark.mongodb.input.uri",
-        "mongodb://localhost:27017/music_database.audio_features_small",
+        f"{data['mongo_uri']}/music_database.audio_features",
     )
     .config(
         "spark.mongodb.output.uri",
-        "mongodb://localhost:27017/music_database.transformed_tracks",
+        f"{data['mongo_uri']}/music_database.transformed_tracks",
     )
     .config(
         "spark.jars.packages",
@@ -37,7 +57,6 @@ def is_non_zero_vector(v):
 
 
 is_non_zero_vector_udf = F.udf(is_non_zero_vector, BooleanType())
-
 
 # Read and repartition data
 df = spark.read.format("mongo").load()
@@ -138,9 +157,9 @@ for batch_num in range(num_batches):
         (F.col("row_num") > start) & (F.col("row_num") <= end))
     model = process_batch(batch_df, f"batch_{batch_num + 1}")
 
-    # # Save the model only for the final batch
+    # Save the model only for the final batch
     if batch_num == num_batches - 1:
-        # Get the current working directory.
+        # Get the current working directory.d
         cwd = os.getcwd()
 
         # Construct the path for the model.
@@ -148,7 +167,7 @@ for batch_num in range(num_batches):
         model.write().overwrite().save(model_path)
         break
     else:
-        # Freeing up memory.
+        # freeing up memory
         del model
         batch_df.unpersist()
 

@@ -41,22 +41,18 @@ def get_songs_from_directory(directory):
         return
 
 
-# Text file to write to for tracking present files in the selected dataset.
-with open("files_in_dataset.txt", "w") as file:
-    # Iterate over the directories in the dataset (000 to 155)
-    for i in range(156):
-        directory = os.path.join(base_directory, f"{i:03d}")
-        # Send the blobs (songs) in the directory to the Kafka topic
-        for song, filename in get_songs_from_directory(directory):
-            if song is not None and len(song) > 0:
-                producer.produce(topic, key=filename.encode(), value=song)
-                message_counter += 1
-                print(f"Sent song: {filename}")
-                file.write(f"{filename}\n")
-                if message_counter % 50 == 0:
-                    producer.flush()
-            else:
-                logging.warning(f"Empty or missing song: {filename}")
-        producer.flush()
+for i in range(156):
+    directory = os.path.join(base_directory, f"{i:03d}")
+    # Send the blobs (songs) in the directory to the Kafka topic
+    for song, filename in get_songs_from_directory(directory):
+        if song is not None and len(song) > 0:
+            producer.produce(topic, key=filename.encode(), value=song)
+            message_counter += 1
+            print(f"Sent song: {filename}")
+            if message_counter % 50 == 0:
+                producer.flush()
+        else:
+            logging.warning(f"Empty or missing song: {filename}")
+    producer.flush()
 
-    logging.info(f"Total {message_counter} messages sent.")
+logging.info(f"Total {message_counter} messages sent.")
