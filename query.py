@@ -1,7 +1,7 @@
 from pyspark.sql import SparkSession, functions as F, Window
 from pyspark.ml.feature import MinHashLSH, MinHashLSHModel, VectorAssembler
 from pyspark.ml.linalg import Vectors, VectorUDT
-from pyspark.sql.types import ArrayType, DoubleType
+from pyspark.sql.types import ArrayType, DoubleType, BooleanType
 from pyspark import StorageLevel
 import os
 
@@ -16,17 +16,28 @@ spark = (
         "spark.mongodb.output.uri",
         "mongodb://localhost:27017/music_database.transformed_tracks",
     )
+    .config(
+        "spark.master",
+        "local",
+    )
+    .config(
+        "spark.jars.packages",
+        "org.mongodb.spark:mongo-spark-connector_2.12:3.0.1"
+    )
     .getOrCreate()
 )
 
 # Define UDFs
 flatten_mfcc_udf = F.udf(
-    lambda mfccs: [float(sum(col) / len(col)) for col in mfccs] if mfccs else [],
+    lambda mfccs: [
+        float(sum(col) / len(col)) for col in mfccs]
+    if mfccs else [],
     ArrayType(DoubleType()),
 )
 array_to_vector_udf = F.udf(lambda x: Vectors.dense(x), VectorUDT())
 
-# Function to load and preprocess data
+
+# Function to load and preprocess data.
 def load_and_preprocess_data():
     # Read data
     df = spark.read.format("mongo").load()
@@ -42,13 +53,15 @@ def load_and_preprocess_data():
         .withColumn(
             "spectral_centroid_mean",
             F.expr(
-                "aggregate(spectral_centroid, 0D, (acc, x) -> acc + x[0]) / size(spectral_centroid)"
+                "aggregate(spectral_centroid, 0D, (acc, x) -> acc + x[0]) \
+                    / size(spectral_centroid)"
             ),
         )
         .withColumn(
             "zero_crossing_rate_mean",
             F.expr(
-                "aggregate(zero_crossing_rate, 0D, (acc, x) -> acc + x[0]) / size(zero_crossing_rate)"
+                "aggregate(zero_crossing_rate, 0D, (acc, x) -> acc + x[0]) \
+                    / size(zero_crossing_rate)"
             ),
         )
     )
@@ -58,14 +71,28 @@ def load_and_preprocess_data():
         inputCols=[
             "mfcc_vector",
             "spectral_centroid_mean",
-            "zero_crossing_rate_mean",
+            "zero_crossing_rate_mean"
         ],
         outputCol="features",
     )
     df = assembler.transform(df).na.drop(subset=["features"])
+
+    # Debugging: Check for zero vectors
+    zero_vector_udf = F.udf(
+        lambda vec: all(value == 0 for value in vec.toArray()), BooleanType()
+    )
+    df = df.withColumn("is_zero_vector", zero_vector_udf("features"))
+    zero_vector_count = df.filter(
+        F.col("is_zero_vector") == True).count()
+    print(f"Number of zero vectors: {zero_vector_count}")
+
+    # Filter out zero vectors
+    df = df.filter(
+        F.col("is_zero_vector") == False).drop("is_zero_vector")
     return df
 
-# Function to build and save MinHash LSH model
+
+# Function to build and save MinHash LSH model.
 def build_and_save_model(df, model_path):
     # Apply MinHash LSH
     mh = MinHashLSH(inputCol="features", outputCol="hashes", numHashTables=5)
@@ -73,47 +100,58 @@ def build_and_save_model(df, model_path):
     model.write().overwrite().save(model_path)
     return model
 
-# Function to find the closest tracks
+
+# Function to find the closest tracks.
 def find_closest_tracks(track_id, model, df):
-    # Extract features for the given track_id
+    # Append .mp3 extension to the track_id.
+    track_id = str(track_id).zfill(6).encode().decode("utf-8") + ".mp3"
+
+    # Extract features for the given track_id.
     track_df = df.filter(F.col("track_id") == track_id)
 
-    # Debugging: Check if track is found
+    # Debugging: Check if track is found.
     if track_df.count() == 0:
         print(f"Track ID '{track_id}' not found.")
         return []
 
-    # Retrieve the features for the specific track
+    # Retrieve the features for the specific track.
     query_features = track_df.first()["features"]
 
     # Find the 5 closest tracks using approxNearestNeighbors
     neighbors = model.approxNearestNeighbors(df, query_features, 6)
 
-    # Exclude original track and return closest track IDs
+    # Exclude original track and return closest track IDs.
     return [
-        row["datasetA.track_id"]
+        row["track_id"]
         for row in neighbors.collect()
-        if row["datasetA.track_id"] != track_id
+        if row["track_id"] != track_id
     ][:5]
 
-# Encapsulated function to build the recommendation system and find similar tracks
+
+# Encapsulated function to build the recommendation system and return tracks.
 def recommend_tracks(track_id):
+    print(f"Starting recommend_tracks for track ID: {track_id}")
     # Define model path
-    model_dir = "file:///home/mohammad/Desktop/manal/"
-    model_path = os.path.join(model_dir, r"minhash_lsh_model")
+    cwd = os.getcwd()
+    model_dir = os.path.abspath(cwd)
+    model_path = "file://" + os.path.join(cwd, "minhash_lsh_model")
 
     # Load and preprocess data
     df = load_and_preprocess_data()
 
-    # Check if model exists
-    if not os.path.exists(model_dir.replace("file://", "")):
-        os.makedirs(model_dir.replace("file://", ""))
+    # Check if model directory exists, if not, create it
+    if not os.path.exists(model_dir):
+        os.makedirs(model_dir)
 
-    if not os.path.exists(model_path.replace("file://", "")):
+    # Check if model exists
+    model_file_path = os.path.join(model_path, "metadata")
+    if not os.path.exists(model_file_path):
         # Build and save the model
+        print("Building and saving the MinHash LSH model.")
         model = build_and_save_model(df, model_path)
     else:
         # Load the existing model
+        print("Loading existing MinHash LSH model.")
         model = MinHashLSHModel.load(model_path)
 
     # Add MinHash LSH transformation to the DataFrame
@@ -121,7 +159,6 @@ def recommend_tracks(track_id):
     df.persist(StorageLevel.DISK_ONLY)
 
     # Find and return the closest tracks
-    return find_closest_tracks(track_id, model, df)
-
-def stop_spark_session():
-    spark.stop()
+    recommended_tracks = find_closest_tracks(track_id, model, df)
+    print(f"Recommended tracks for track ID {track_id}: {recommended_tracks}")
+    return recommended_tracks

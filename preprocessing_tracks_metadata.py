@@ -25,8 +25,16 @@ def preprocess_data(file_path, files_in_dataset_path):
     # Only keep records where the track_id is in the "files_in_dataset" list
     df = df[df["track_id"].isin(files_in_dataset)]
 
+    # removing characters such as ', (, ), and " from the track_title
+    df["track_title"] = df["track_title"].str.replace(
+        r"[',()\"\\-]",
+        "",
+        regex=True
+    )
+
     df["track_date_created"] = pd.to_datetime(df["track_date_created"])
-    df["track_date_created"] = df["track_date_created"].dt.strftime("%Y-%m-%d %H:%M:%S")
+    df["track_date_created"] = df["track_date_created"].dt.strftime(
+                                                        "%Y-%m-%d %H:%M:%S")
 
     df["track_duration"] = df["track_duration"].apply(
         lambda x: (

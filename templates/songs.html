@@ -9,15 +9,17 @@
 <body>
     <div class="header">
         <div class="logo">
-            <a href="http://192.168.0.106:5003">
+            <a href="{{ url_for('index') }}">
                 <img src="{{ url_for('static', filename='logo.png') }}" alt="Spotify Logo" class="spotify-logo">
-            </a>      
+            </a>
         </div>
-        <div class="music-player-container">
+        <div class="music-player-container" data-track-id="{{ track.track_id }}">
             <div class="music-details">
-                <img src="{{ url_for('static', filename='album.jpg')}}" alt="Album Cover" class="album-cover">
+                <img src="{{ url_for('static', filename='album.jpg') }}" alt="Album Cover" class="album-cover">
                 <div class="song-info">
-                    <span class="song-title"><a href="{{ url_for('song', track_id=track['track_id']) }}">{{ track['track_title'] }}</a></span>
+                    <span class="song-title">
+                        <a href="{{ url_for('song', track_id=track['track_id']) }}">{{ track['track_title'] }}</a>
+                    </span>
                     <span class="artist-name">{{ track['artist_name'] }}</span>
                 </div>
             </div>
@@ -29,71 +31,72 @@
                 </div>
             </div>
             <div class="playback-controls">
-                <button id="prev" onclick="previousSong()"><i class="fas fa-step-backward"></i></button>
-                <button onclick="togglePlayPause()"><i class="fas fa-play" id="play-pause-icon"></i></button>
-                <button id="next" onclick="nextSong()"><i class="fas fa-step-forward"></i></button>
+                <button id="prev">
+                    <i class="fas fa-step-backward"></i>
+                </button>
+                <button id="play-pause">
+                    <i class="fas fa-play" id="play-pause-icon"></i>
+                </button>
+                <button id="next">
+                    <i class="fas fa-step-forward"></i>
+                </button>                
             </div>
             <div class="recommendations">
                 <h3>Recommended</h3>
-                <ul>
-                    {% for rec in recommendations %}
-                    <li><a href="{{ url_for('song', track_id=rec['track_id']) }}">{{ rec['track_title'] }}</a></li>
-                    {% endfor %}
-                </ul>
+                <div id="recommendations-container">
+                    <div id="loading-spinner">
+                        <i class="fas fa-spinner fa-spin"></i> Loading...
+                    </div>
+                    <ul id="recommendations-list" style="display: none;"></ul>
+                </div>
             </div>
         </div>
     </div>
-
     <audio id="audio-element" src="{{ url_for('serve_audio', track_id=track['track_id']) }}"></audio>
-
-    <script src="{{ url_for('static', filename='player_script.js') }}"></script>
-    <script>
-        {% comment %} document.addEventListener('DOMContentLoaded', function() {
-            const trackUrls = {
-                {% for rec in recommendations %}
-                "{{ rec['track_id'] }}": "{{ url_for('serve_audio', track_id=rec['track_id']) }}",
-                {% endfor %}
-            }; {% endcomment %}
-
-            document.addEventListener('DOMContentLoaded', function() {
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const trackId = {{ track.track_id }};
+                const baseSongUrl = "{{ url_for('song', track_id=0) }}".slice(0, -1);  // Remove the '0' at the end
+                const recommendationsUrl = `{{ url_for('get_recommendations', track_id=track['track_id']) }}`;
                 const audioElement = document.getElementById('audio-element');
                 const progressBar = document.getElementById('progress-bar');
                 const currentTimeElement = document.getElementById('current-time');
                 const totalDurationElement = document.getElementById('total-duration');
                 const playPauseIcon = document.getElementById('play-pause-icon');
+                const musicPlayerContainer = document.querySelector('.music-player-container');
                 let isPlaying = false;
-        
-                // Handling Next and Previous track navigation
-                let currentSongIndex = 0;
-                const tracks = {{ recommendations|tojson }};
-                const trackUrls = tracks.map(track => "{{ url_for('serve_audio', track_id='') }}" + track.track_id);
-        
-                function playSong(index) {
-                    currentSongIndex = index;
-                    audioElement.src = trackUrls[currentSongIndex];
-                    audioElement.play();
-                    playPauseIcon.className = 'fas fa-pause';
-                    isPlaying = true;
-                    updateTrackDetails();
+            
+                async function fetchRecommendations() {
+                    try {
+                        const response = await fetch(recommendationsUrl);
+                        if (!response.ok) {
+                            throw new Error('Failed to fetch recommendations: ' + response.statusText);
+                        }
+                        const recommendations = await response.json();
+                        updateRecommendationsUI(recommendations);
+                    } catch (error) {
+                        document.getElementById('loading-spinner').innerText = 'Failed to load recommendations.';
+                    }
                 }
-        
-                function updateTrackDetails() {
-                    const track = tracks[currentSongIndex];
-                    document.querySelector('.song-title a').textContent = track.track_title;
-                    document.querySelector('.artist-name').textContent = track.artist_name;
-                    // Assuming album cover is updated similarly, if images are included in track data
+            
+                function updateRecommendationsUI(recommendations) {
+                    const spinner = document.getElementById('loading-spinner');
+                    const list = document.getElementById('recommendations-list');
+                    spinner.style.display = 'none'; // Hide the spinner
+                    list.innerHTML = ''; // Clear previous entries
+                    recommendations.forEach(rec => {
+                        const item = document.createElement('li');
+                        const link = document.createElement('a');
+                        link.href = baseSongUrl + rec.track_id;  // Append track_id dynamically
+                        link.textContent = `${rec.track_title} by ${rec.artist_name}`;
+                        item.appendChild(link);
+                        list.appendChild(item);
+                    });
+                    list.style.display = 'block'; // Display the updated list
                 }
-        
-                document.getElementById('next').addEventListener('click', function() {
-                    let newIndex = (currentSongIndex + 1) % tracks.length;
-                    playSong(newIndex);
-                });
-        
-                document.getElementById('prev').addEventListener('click', function() {
-                    let newIndex = (currentSongIndex - 1 + tracks.length) % tracks.length;
-                    playSong(newIndex);
-                });
-        
+            
+                fetchRecommendations();
+            
                 function togglePlayPause() {
                     if (isPlaying) {
                         audioElement.pause();
@@ -105,27 +108,51 @@
                         isPlaying = true;
                     }
                 }
-        
-                // Event listeners for the audio element
-                audioElement.addEventListener('timeupdate', function() {
+            
+                document.getElementById('play-pause').addEventListener('click', togglePlayPause);
+            
+                document.getElementById('next').addEventListener('click', function () {
+                    navigateToSong('next');
+                });
+            
+                document.getElementById('prev').addEventListener('click', function () {
+                    navigateToSong('prev');
+                });
+            
+                async function navigateToSong(direction) {
+                    const currentTrackId = parseInt(musicPlayerContainer.dataset.trackId);
+                    try {
+                        const response = await fetch(`/navigate_song/${currentTrackId}/${direction}`);
+                        const data = await response.json();
+                        if (data.success) {
+                            window.location.href = baseSongUrl + data.track_id;
+                        } else {
+                            console.error('Error navigating to song:', data.error);
+                        }
+                    } catch (error) {
+                        console.error('Error navigating to song:', error);
+                    }
+                }
+            
+                audioElement.addEventListener('timeupdate', function () {
                     const currentTime = audioElement.currentTime;
                     const duration = audioElement.duration;
                     progressBar.value = (currentTime / duration) * 100;
                     currentTimeElement.innerText = formatTime(currentTime);
                     totalDurationElement.innerText = formatTime(duration);
                 });
-        
-                progressBar.addEventListener('input', function() {
+            
+                progressBar.addEventListener('input', function () {
                     const newTime = (progressBar.value / 100) * audioElement.duration;
                     audioElement.currentTime = newTime;
                 });
-        
+            
                 function formatTime(seconds) {
                     const minutes = Math.floor(seconds / 60);
                     const remainingSeconds = Math.floor(seconds % 60);
                     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
                 }
             });
-    </script>   
+        </script>    
 </body>
 </html>

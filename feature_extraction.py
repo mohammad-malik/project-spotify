@@ -4,10 +4,11 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from pymongo import MongoClient, InsertOne
 import logging
 from confluent_kafka import Consumer, KafkaError, TopicPartition
-import concurrent.futures
+import multiprocessing as mp
 from pydub import AudioSegment
 import io
 import numpy as np
+from tqdm import tqdm
 
 # Kafka Consumer Configuration
 KAFKA_BOOTSTRAP_SERVERS = "localhost:9092"
@@ -105,11 +106,14 @@ def batch_insert_documents(documents):
 
 
 def consume_audio_messages():
-    batch_size = 10
+    batch_size = 50
     batch = []
+    total_processed = 0
 
     try:
-        with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+        with mp.Pool(processes=4) as pool, tqdm(
+            desc="Total processing", unit=" messages"
+        ) as pbar:
             while True:
                 msg = consumer.poll(1.0)
                 if msg is None:
@@ -124,15 +128,14 @@ def consume_audio_messages():
                 track_id = msg.key().decode("utf-8")
                 audio_data = msg.value()
 
-                future = executor.submit(
-                    process_audio_features, track_id, audio_data)
-                batch.append(future)
+                batch.append((track_id, audio_data))
 
                 if len(batch) >= batch_size:
-                    results = [
-                        f.result() for f in batch if f.result() is not None
-                    ]
-                    batch_insert_documents(results)
+                    results = pool.starmap(process_audio_features, batch)
+                    valid_results = [res for res in results if res is not None]
+                    batch_insert_documents(valid_results)
+                    total_processed += len(batch)
+                    pbar.update(len(batch))
                     batch.clear()
 
     except KeyboardInterrupt:

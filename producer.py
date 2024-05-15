@@ -6,7 +6,7 @@ from confluent_kafka import Producer
 logging.basicConfig(level=logging.INFO)
 
 # Local file system base directory
-base_directory = "/home/mohammad/Desktop/manal/fma_small"
+base_directory = "./fma_small"
 
 # Kafka details
 bootstrap_servers = "localhost:9092"

@@ -1,7 +1,7 @@
 from pyspark.sql import SparkSession, functions as F, Window
-from pyspark.ml.feature import MinHashLSH, VectorAssembler, PCA, StandardScaler
+from pyspark.ml.feature import MinHashLSH, VectorAssembler
 from pyspark.ml.linalg import Vectors, VectorUDT
-from pyspark.sql.types import ArrayType, DoubleType
+from pyspark.sql.types import ArrayType, DoubleType, BooleanType
 import os
 
 # Initialize Spark Session
@@ -15,15 +15,25 @@ spark = (
         "spark.mongodb.output.uri",
         "mongodb://localhost:27017/music_database.transformed_tracks",
     )
+    .config("spark.master", "local")
     .getOrCreate()
 )
 
 # Define UDFs
 flatten_mfcc_udf = F.udf(
-    lambda mfccs: [float(sum(col) / len(col)) for col in mfccs] if mfccs else [],
+    lambda mfccs: [
+        float(sum(col) / len(col)) for col in mfccs] if mfccs else [],
     ArrayType(DoubleType()),
 )
 array_to_vector_udf = F.udf(lambda x: Vectors.dense(x), VectorUDT())
+
+
+def is_non_zero_vector(v):
+    return any(e != 0 for e in v)
+
+
+is_non_zero_vector_udf = F.udf(is_non_zero_vector, BooleanType())
+
 
 # Read and repartition data
 df = spark.read.format("mongo").load()
@@ -67,6 +77,7 @@ def process_batch(batch_df, batch_name):
             F.col("mfcc_vector").isNotNull()
             & F.col("spectral_centroid_mean").isNotNull()
             & F.col("zero_crossing_rate_mean").isNotNull()
+            & is_non_zero_vector_udf(F.col("mfcc_vector"))
         )
     )
 
@@ -82,11 +93,7 @@ def process_batch(batch_df, batch_name):
     features_data = assembler.transform(batch_df).na.drop(subset=["features"])
 
     # Apply MinHash LSH
-    mh = MinHashLSH(
-        inputCol="features",
-        outputCol="hashes",
-        numHashTables=5
-    )
+    mh = MinHashLSH(inputCol="features", outputCol="hashes", numHashTables=5)
     model = mh.fit(features_data)
     transformed_data = model.transform(features_data)
 
@@ -123,14 +130,23 @@ num_batches = (total_rows // batch_size) + 1
 for batch_num in range(num_batches):
     start = batch_num * batch_size
     end = start + batch_size
-    batch_df = df.filter((F.col("row_num") > start) & (F.col("row_num") <= end))
+    batch_df = df.filter(
+        (F.col("row_num") > start) & (F.col("row_num") <= end))
     model = process_batch(batch_df, f"batch_{batch_num + 1}")
+
     # # Save the model only for the final batch
-    # if batch_num == num_batches - 1:
-    model_dir = "file:///home/mohammad/Desktop/manal/"
-    model_path = os.path.join(model_dir, r"minhash_lsh_model")
-    model.write().overwrite().save(model_path)
-    break
+    if batch_num == num_batches - 1:
+        # Get the current working directory.
+        cwd = os.getcwd()
+
+        # Construct the path for the model.
+        model_path = "file://" + os.path.join(cwd, "minhash_lsh_model")
+        model.write().overwrite().save(model_path)
+        break
+    else:
+        # freeing up memory
+        del model
+        batch_df.unpersist()
 
 # Stop Spark session
 spark.stop()
